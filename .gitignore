@@ -1,0 +1,47 @@
+# Node modules
+node_modules/
+**/node_modules/
+
+
+
+# Build outputs
+dist/
+build/
+out/
+**/dist/
+**/build/
+**/out/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Optional: package lock files (if you want to ignore in monorepo)
+package-lock.json
+yarn.lock
+
+# Docker files (optional if you track Dockerfile separately)
+docker-compose.override.yml
+
+# Others
+*.tgz
+*.zip

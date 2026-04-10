@@ -1,0 +1,10 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  '@nestjs/core': false
+  '@prisma/engines': false
+  msw: false
+  prisma: false
+  sharp: false
+  unrs-resolver: false

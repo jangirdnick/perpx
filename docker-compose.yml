@@ -1,0 +1,51 @@
+services:
+  api:
+    build: 
+      context: .
+      dockerfile: docker/api.Dockerfile
+    container_name: perpx_api
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    networks:
+      - perpx_network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/api', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+  
+  web:
+    build: 
+      context: .
+      dockerfile: docker/web.Dockerfile
+      target: runner
+    container_name: perpx_web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api:
+          condition: service_started
+    networks:
+      - perpx_network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  redis:
+    image: redis:7-alpine
+    container_name: perpx_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - perpx_network
+
+networks:
+  perpx_network:
+    driver: bridge
