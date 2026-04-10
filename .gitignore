@@ -45,3 +45,10 @@ docker-compose.override.yml
 # Others
 *.tgz
 *.zip
+
+
+# Husky
+.husky/_
+
+# Prettier cache
+.prettier-cache
