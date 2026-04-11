@@ -1,7 +1,9 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider        = "prisma-client-js"
+  previewFeatures = []
+  binaryTargets   = ["native", "rhel-openssl-3.0.x"]
 }
+
 
 datasource db {
   provider = "postgresql"
