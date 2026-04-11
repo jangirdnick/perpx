@@ -12,11 +12,11 @@
   },
   "lint-staged": {
     "apps/api/**/*.{ts,js}": [
-      "eslint --fix",
+      "pnpm --filter api lint --fix",
       "prettier --write"
     ],
     "apps/web/**/*.{ts,tsx,js,jsx}": [
-      "eslint --fix",
+      "pnpm --filter web lint --fix",
       "prettier --write"
     ],
     "**/*.{json,md,yaml}": [
