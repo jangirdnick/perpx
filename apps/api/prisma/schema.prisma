@@ -1,0 +1,152 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../generated/prisma"
+  previewFeatures = []
+  binaryTargets   = ["native", "rhel-openssl-3.0.x"]
+}
+
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum SubscriptionPlan {
+  NORMAL
+  PLUS
+  MAX
+}
+
+
+model User {
+  id              String                 @id @default(cuid())
+  fullname        String
+  username        String                 @unique
+  email           String                 @unique
+  emailVerified   Boolean                @default(false)
+  password        String
+  avatar          String?
+  role            UserRole               @default(USER)
+  subscription    SubscriptionPlan       @default(NORMAL)
+
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  refreshToken    RefreshToken[]
+  chats           Chat[]
+  messages        Message[]
+  spaceMembers     SpaceMember[]
+
+  @@map("user")
+}
+
+
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+
+model Chat {
+  id              String        @id @default(cuid())
+  title           String
+  description     String
+  userId          String
+  spaceId         String?
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spaces          Space?        @relation(fields: [spaceId], references: [id])
+  messages        Message[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("chat")
+}
+
+
+enum MessageRole {
+  HUMAN
+  AI
+}
+
+model Message {
+  id              String        @id @default(cuid())
+  message         String
+  role            MessageRole
+
+  userId          String
+  chatId          String
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat            Chat          @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sources         Source[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("message")
+}
+
+
+model Source {
+  id              String        @id @default(cuid())
+  title           String
+  url             String
+  snippet         String
+
+  messageId       String
+  message         Message       @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+enum SpaceType {
+  PUBLIC
+  PRIVATE
+  GROUP
+}
+
+model Space {
+  id              String        @id @default(cuid())
+  
+  title           String
+  description     String
+  type            SpaceType     @default(PRIVATE)
+
+  chats           Chat[]
+  spaceMembers     SpaceMember[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+enum SpaceMemberRole {
+  ADMIN
+  MEMBER
+}
+
+model SpaceMember {
+  id              String               @id @default(cuid())
+  role            SpaceMemberRole
+  spaceId         String
+  userId          String
+
+  space           Space                @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+}
+
