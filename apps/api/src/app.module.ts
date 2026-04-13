@@ -6,12 +6,16 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { EmailModule } from './email/email.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: ['.env'],
       isGlobal: true,
+    }),
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECREET,
     }),
     PrismaModule,
     AuthModule,
