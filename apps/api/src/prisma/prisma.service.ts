@@ -11,11 +11,9 @@ export class PrismaService
 {
   constructor(private config: ConfigService) {
     const dbUrl = config.getOrThrow<string>('DATABASE_URL');
-
-    const pool = new Pool({
-      connectionString: dbUrl,
-    });
-
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const pool: Pool = new Pool({ connectionString: dbUrl });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const adapter = new PrismaPg(pool);
 
     super({ adapter });

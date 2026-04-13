@@ -33,6 +33,7 @@
     "class-validator": "^0.15.1",
     "fs-extra": "^11.3.4",
     "handlebars": "^4.7.9",
+    "nestjs-resend": "^1.1.0",
     "pg": "^8.20.0",
     "prisma": "^7.7.0",
     "reflect-metadata": "^0.2.2",

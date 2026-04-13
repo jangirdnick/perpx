@@ -32,13 +32,13 @@ export class AuthService {
     if (!user) throw new BadRequestException('User create failed');
 
     const emailTokenData = { id: user.id, email: user.email };
-    const emailToken = await this.jwtService.signAsync(emailTokenData);
+    const emailToken: string = this.jwtService.sign(emailTokenData);
 
     const sendMail = await this.emailService.sendVerificationEmail(
       user.email,
       emailToken,
     );
-    if (!sendMail)
+    if (!sendMail.id)
       throw new BadRequestException('Verifaction email sending failed');
 
     return {

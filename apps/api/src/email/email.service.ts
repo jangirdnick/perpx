@@ -1,39 +1,32 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Resend } from 'resend';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { ResendService } from 'nestjs-resend';
 import { renderTemplate } from '../utils/renderTemplate';
 
 @Injectable()
 export class EmailService {
-  private resend: Resend;
+  constructor(private readonly resendService: ResendService) {}
 
-  constructor(private readonly configService: ConfigService) {
-    const resendKey = this.configService.getOrThrow<string>('RESEND_API_KEY');
-    this.resend = new Resend(resendKey);
-  }
-
-  async sendVerificationEmail(email: string, token: string): Promise<any> {
+  async sendVerificationEmail(email: string, token: string) {
     if (!email || !token) {
-      throw new NotFoundException('Email & token required');
+      throw new NotFoundException('Email & Token not found');
     }
 
     const verificationLink = `http://localhost:3001/verify-email?token=${token}`;
+
     const html = renderTemplate('verification', {
       verificationLink,
     });
 
-    const { data, error } = await this.resend.emails.send({
+    const { data, error } = await this.resendService.emails.send({
       from: 'Perpx <onboarding@resend.dev>',
-      to: [email], // ✅ Array format (Resend requirement)
-      subject: 'Verify your email',
+      to: email,
+      subject: 'Verify email',
       html,
     });
 
-    if (error) throw new BadRequestException(`Email failed: ${error.message}`);
+    if (error) {
+      throw new Error(error.message);
+    }
 
     return data;
   }
