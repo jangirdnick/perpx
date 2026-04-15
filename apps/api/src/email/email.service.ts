@@ -11,7 +11,7 @@ export class EmailService {
       throw new NotFoundException('Email & Token not found');
     }
 
-    const verificationLink = `http://localhost:3001/verify-email?token=${token}`;
+    const verificationLink = `http://localhost:3001/api/auth/verify-email?token=${token}`;
 
     const html = renderTemplate('verification', {
       verificationLink,
