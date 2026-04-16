@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { RegisterUserDto } from './dto/register.dto';
@@ -11,6 +13,7 @@ import { JwtService } from '@nestjs/jwt';
 import { LoginUserDto } from './dto/login.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
+import { JWTCookiePayload, JwtQureyPayload } from './types/jwt.type';
 
 @Injectable()
 export class AuthService {
@@ -98,13 +101,13 @@ export class AuthService {
         expiresIn: '15m',
       });
 
+      const deviceId = uuidv4();
       const refresh_token = this.jwtService.sign(
-        { sub: existUser.id },
+        { sub: existUser.id, device: deviceId },
         { expiresIn: '7d' },
       );
 
       const hashToken = await BcryptUtil.hash(refresh_token);
-      const deviceId = uuidv4();
 
       // Refresh token save database
       await this.prisma.refreshToken.create({
@@ -176,12 +179,7 @@ export class AuthService {
 
   async verifyEmail(token: string) {
     try {
-      type JwtPayload = {
-        sub: string;
-        email: string;
-      };
-
-      const decodedToken = this.jwtService.verify<JwtPayload>(token);
+      const decodedToken = this.jwtService.verify<JwtQureyPayload>(token);
       if (!decodedToken)
         throw new BadRequestException('Invalid verifaction token token');
 
@@ -216,5 +214,68 @@ export class AuthService {
           : 'Verifaction failed. Please try again.',
       );
     }
+  }
+
+  async refreshToken(token: string) {
+    const decodedToken = this.jwtService.verify<JWTCookiePayload>(token);
+    if (!decodedToken) throw new UnauthorizedException('Invalid token');
+
+    const dbToken = await this.prisma.refreshToken.findFirst({
+      where: { userId: decodedToken.sub, deviceId: decodedToken.device },
+      select: {
+        id: true,
+        deviceId: true,
+        hashedToken: true,
+        expiresAt: true,
+        user: {
+          select: {
+            id: true,
+            fullname: true,
+            username: true,
+            email: true,
+          },
+        },
+      },
+    });
+    if (!dbToken || dbToken.expiresAt < new Date()) {
+      throw new UnauthorizedException('Token expired');
+    }
+    const decodedDBToken = await BcryptUtil.compair(token, dbToken.hashedToken);
+    if (!decodedDBToken) throw new ForbiddenException('Invalid request');
+
+    await this.prisma.refreshToken.delete({ where: { id: dbToken.id } });
+
+    const payload = {
+      sub: dbToken.user.id,
+      fullname: dbToken.user.fullname,
+      username: dbToken.user.username,
+      email: dbToken.user.email,
+    };
+    const access_token = this.jwtService.sign(payload, {
+      expiresIn: '15m',
+    });
+
+    const refresh_token = this.jwtService.sign(
+      { sub: dbToken.user.id, device: dbToken.deviceId },
+      { expiresIn: '7d' },
+    );
+
+    const hashedToken = await BcryptUtil.hash(refresh_token);
+    await this.prisma.refreshToken.create({
+      data: {
+        hashedToken,
+        deviceId: dbToken.deviceId,
+        userId: dbToken.user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    return {
+      data: {
+        user: dbToken.user,
+      },
+      access_token,
+      refresh_token,
+    };
   }
 }
