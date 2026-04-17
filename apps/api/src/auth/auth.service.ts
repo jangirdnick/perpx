@@ -14,6 +14,8 @@ import { LoginUserDto } from './dto/login.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
 import { JWTCookiePayload, JwtQureyPayload } from './types/jwt.type';
+import { handleServiceError } from '../utils/errorHandler';
+import { User } from '../user/types/user.type';
 
 @Injectable()
 export class AuthService {
@@ -23,6 +25,19 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
   ) {}
+
+  private generateTokens(user: User, deviceId: string) {
+    const accessPayload = { sub: user.id, ...user };
+    const refreshPayload = { sub: user.id, device: deviceId };
+
+    const access_token = this.jwtService.sign(accessPayload, {
+      expiresIn: '15m',
+    });
+    const refresh_token = this.jwtService.sign(refreshPayload, {
+      expiresIn: '7d',
+    });
+    return { access_token, refresh_token };
+  }
 
   async registerUser(registerDto: RegisterUserDto) {
     // 1. Validation
@@ -59,10 +74,9 @@ export class AuthService {
         error: null,
       };
     } catch (error) {
-      throw new BadRequestException(
-        error instanceof BadRequestException
-          ? error.message
-          : 'Registration failed. Please try again.',
+      handleServiceError(
+        error,
+        'Registration service failed. Please try again.',
       );
     }
   }
@@ -90,24 +104,14 @@ export class AuthService {
         throw new BadRequestException('Invalid email or password');
       }
 
-      // Creating tokens
-      const payload = {
-        sub: existUser.id,
-        fullname: existUser.fullname,
-        username: existUser.username,
-        email: existUser.email,
-      };
-      const access_token = this.jwtService.sign(payload, {
-        expiresIn: '15m',
-      });
-
       const deviceId = uuidv4();
-      const refresh_token = this.jwtService.sign(
-        { sub: existUser.id, device: deviceId },
-        { expiresIn: '7d' },
-      );
+      const token = this.generateTokens(userWithoutPassword, deviceId);
+      if (!token)
+        throw new BadRequestException(
+          'Token generation failed. Please try again.',
+        );
 
-      const hashToken = await BcryptUtil.hash(refresh_token);
+      const hashToken = await BcryptUtil.hash(token.access_token);
 
       // Refresh token save database
       await this.prisma.refreshToken.create({
@@ -125,15 +129,11 @@ export class AuthService {
         data: {
           user: userWithoutPassword,
         },
-        access_token,
-        refresh_token,
+        access_token: token.access_token,
+        refresh_token: token.refresh_token,
       };
     } catch (error) {
-      throw new BadRequestException(
-        error instanceof BadRequestException
-          ? error.message
-          : 'Login failed. Please try again.',
-      );
+      handleServiceError(error, 'Login service failed. Please try again.');
     }
   }
 
@@ -141,7 +141,12 @@ export class AuthService {
     try {
       const existUser = await this.userService.findByEmail(loginDto.email);
       if (!existUser)
-        throw new NotFoundException('User not found. Chaeck all credintial.');
+        throw new NotFoundException('User not found. Check all credential.');
+
+      if (existUser.emailVerified)
+        throw new BadRequestException(
+          `${existUser.fullname}  email allredy verified.`,
+        );
 
       const isPasswordValid = await BcryptUtil.compair(
         loginDto.password,
@@ -149,7 +154,7 @@ export class AuthService {
       );
       if (!isPasswordValid)
         throw new BadRequestException(
-          'Invalied credintials. Please check all credintials.',
+          'Invalid credentials. Please check all credentials.',
         );
 
       const emailTokenData = { sub: existUser.id, email: existUser.email };
@@ -164,15 +169,14 @@ export class AuthService {
 
       return {
         success: true,
-        message: `${existUser.fullname} verifycation email sended. Please verify your email.`,
+        message: `${existUser.fullname} verification email sent. Please verify your email.`,
         data: {},
         error: null,
       };
     } catch (error) {
-      throw new BadRequestException(
-        error instanceof BadRequestException
-          ? error.message
-          : 'Sending verify email failed. Please try again.',
+      handleServiceError(
+        error,
+        'Sending new verify email service failed. Please try again.',
       );
     }
   }
@@ -186,7 +190,7 @@ export class AuthService {
       const user = await this.prisma.user.findFirst({
         where: { id: decodedToken.sub, email: decodedToken.email },
       });
-      if (!user) throw new BadRequestException('Forbidan request');
+      if (!user) throw new BadRequestException('Forbidden request');
 
       if (user.emailVerified)
         throw new BadRequestException('Email already verified');
@@ -203,79 +207,165 @@ export class AuthService {
 
       return {
         success: true,
-        message: `${updatedUser.fullname} email verifyed successfull 🎉`,
+        message: `${updatedUser.fullname} email verified successfull 🎉`,
         data: {},
         error: null,
       };
     } catch (error) {
-      throw new BadRequestException(
-        error instanceof BadRequestException
-          ? error.message
-          : 'Verifaction failed. Please try again.',
+      handleServiceError(
+        error,
+        'Verifaction email service failed. Please try again.',
       );
     }
   }
 
   async refreshToken(token: string) {
-    const decodedToken = this.jwtService.verify<JWTCookiePayload>(token);
-    if (!decodedToken) throw new UnauthorizedException('Invalid token');
+    try {
+      const decodedToken = this.jwtService.verify<JWTCookiePayload>(token);
+      if (!decodedToken) throw new UnauthorizedException('Invalid token');
 
-    const dbToken = await this.prisma.refreshToken.findFirst({
-      where: { userId: decodedToken.sub, deviceId: decodedToken.device },
-      select: {
-        id: true,
-        deviceId: true,
-        hashedToken: true,
-        expiresAt: true,
-        user: {
-          select: {
-            id: true,
-            fullname: true,
-            username: true,
-            email: true,
+      const dbToken = await this.prisma.refreshToken.findFirst({
+        where: { userId: decodedToken.sub, deviceId: decodedToken.device },
+        select: {
+          id: true,
+          deviceId: true,
+          hashedToken: true,
+          expiresAt: true,
+          user: {
+            select: {
+              id: true,
+              fullname: true,
+              username: true,
+              avatar: true,
+              email: true,
+              emailVerified: true,
+              role: true,
+              createdAt: true,
+              updatedAt: true,
+            },
           },
         },
-      },
-    });
-    if (!dbToken || dbToken.expiresAt < new Date()) {
-      throw new UnauthorizedException('Token expired');
+      });
+      if (!dbToken || dbToken.expiresAt < new Date()) {
+        throw new UnauthorizedException('Token expired');
+      }
+      const decodedDBToken = await BcryptUtil.compair(
+        token,
+        dbToken.hashedToken,
+      );
+      if (!decodedDBToken) throw new ForbiddenException('Invalid request');
+
+      await this.prisma.refreshToken.delete({ where: { id: dbToken.id } });
+
+      const newToken = this.generateTokens(dbToken.user, dbToken.deviceId!);
+      if (!newToken)
+        throw new BadRequestException(
+          'Token generation failed. Please try again.',
+        );
+
+      const hashedToken = await BcryptUtil.hash(newToken.refresh_token);
+      await this.prisma.refreshToken.create({
+        data: {
+          hashedToken,
+          deviceId: dbToken.deviceId,
+          userId: dbToken.user.id,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      });
+
+      return {
+        data: {
+          user: dbToken.user,
+        },
+        access_token: newToken.access_token,
+        refresh_token: newToken.refresh_token,
+      };
+    } catch (error) {
+      handleServiceError(error, 'Refresh token service failed.');
     }
-    const decodedDBToken = await BcryptUtil.compair(token, dbToken.hashedToken);
-    if (!decodedDBToken) throw new ForbiddenException('Invalid request');
+  }
 
-    await this.prisma.refreshToken.delete({ where: { id: dbToken.id } });
+  async logoutUser(token: string) {
+    try {
+      const decodedToken = this.jwtService.verify<JWTCookiePayload>(token);
+      if (!decodedToken) throw new UnauthorizedException('Invalid token');
 
-    const payload = {
-      sub: dbToken.user.id,
-      fullname: dbToken.user.fullname,
-      username: dbToken.user.username,
-      email: dbToken.user.email,
-    };
-    const access_token = this.jwtService.sign(payload, {
-      expiresIn: '15m',
-    });
+      const dbToken = await this.prisma.refreshToken.findFirst({
+        where: {
+          OR: [{ userId: decodedToken.sub }, { deviceId: decodedToken.device }],
+        },
+        select: {
+          id: true,
+          hashedToken: true,
+          deviceId: true,
+          expiresAt: true,
+        },
+      });
 
-    const refresh_token = this.jwtService.sign(
-      { sub: dbToken.user.id, device: dbToken.deviceId },
-      { expiresIn: '7d' },
-    );
+      if (!dbToken || dbToken.expiresAt < new Date())
+        throw new UnauthorizedException('Token expire');
 
-    const hashedToken = await BcryptUtil.hash(refresh_token);
-    await this.prisma.refreshToken.create({
-      data: {
-        hashedToken,
-        deviceId: dbToken.deviceId,
-        userId: dbToken.user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
+      const decodedDBToken = await BcryptUtil.compair(
+        token,
+        dbToken.hashedToken,
+      );
+      if (!decodedDBToken) throw new ForbiddenException('Invalid access');
 
-    return {
-      data: {
-        user: dbToken.user,
-      },
-      access_token,
-      refresh_token,
-    };
+      await this.prisma.refreshToken.deleteMany({
+        where: {
+          userId: decodedToken.sub,
+          deviceId: decodedToken.device,
+        },
+      });
+
+      return true;
+    } catch (error) {
+      handleServiceError(
+        error,
+        'Logout user service failed. Please try again.',
+      );
+    }
+  }
+
+  async logoutAllDevices(token: string) {
+    try {
+      const decodedToken = this.jwtService.verify<JWTCookiePayload>(token);
+      if (!decodedToken) throw new UnauthorizedException('Invalid token');
+
+      const dbToken = await this.prisma.refreshToken.findFirst({
+        where: {
+          OR: [{ userId: decodedToken.sub }, { deviceId: decodedToken.device }],
+        },
+        select: {
+          id: true,
+          hashedToken: true,
+          deviceId: true,
+          expiresAt: true,
+        },
+      });
+
+      if (!dbToken || dbToken.expiresAt < new Date())
+        throw new UnauthorizedException('Token expire');
+
+      const decodedDBToken = await BcryptUtil.compair(
+        token,
+        dbToken.hashedToken,
+      );
+      if (!decodedDBToken) throw new ForbiddenException('Invalid exces');
+
+      await this.prisma.refreshToken.deleteMany({
+        where: {
+          userId: decodedToken.sub,
+          deviceId: decodedToken.device,
+        },
+      });
+
+      return true;
+    } catch (error) {
+      handleServiceError(
+        error,
+        'Logout all devices service failed. Please try again.',
+      );
+    }
   }
 }
