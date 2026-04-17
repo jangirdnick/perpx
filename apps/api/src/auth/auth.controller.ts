@@ -20,7 +20,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async registerUser(@Body() registerDto: RegisterUserDto) {
+  registerUser(@Body() registerDto: RegisterUserDto) {
     return this.authService.registerUser(registerDto);
   }
 
@@ -30,6 +30,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     const user = await this.authService.loginUser(loginDto);
+    if (!user) throw new BadRequestException('Login service failed.');
     response.cookie('token', user.refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -47,10 +48,10 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(AuthGuard)
-  getMe(@Req() req: Request) {
+  getMe(@Req() request: Request) {
     return {
       success: true,
-      user: req.user,
+      user: request.user,
     };
   }
 
@@ -60,8 +61,10 @@ export class AuthController {
     @Req() request: Request,
   ) {
     const token = request.cookies?.token as string;
+    if (!token)
+      throw new BadRequestException('Wrong request token is require.');
     const user = await this.authService.refreshToken(token);
-
+    if (!user) throw new BadRequestException('Refresh token service failed.');
     response.cookie('token', user.refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -77,10 +80,31 @@ export class AuthController {
   }
 
   @Post('logout')
-  logoutUser() {}
+  async logoutUser(@Req() request: Request, @Res() response: Response) {
+    const token = request.cookies?.token as string;
+    if (!token)
+      throw new BadRequestException('Wrong request token is require.');
+    await this.authService.logoutUser(token);
+    response.clearCookie('token');
+    return {
+      success: true,
+      message: 'Logout successfully.',
+    };
+  }
 
   @Post('logout-all')
-  logoutAllDevices() {}
+  async logoutAllDevices(@Req() request: Request, @Res() response: Response) {
+    const token = request.cookies?.token as string;
+    if (!token)
+      throw new BadRequestException('Wrong request token is require.');
+
+    await this.authService.logoutAllDevices(token);
+    response.clearCookie('token');
+    return {
+      success: true,
+      message: 'Logged out all devices',
+    };
+  }
 
   @Post('send/verification-email')
   async sendVerificationEmail(@Body() loginDto: LoginUserDto) {
@@ -89,7 +113,8 @@ export class AuthController {
 
   @Post('verify-email')
   async verifyEmail(@Query('token') token: string) {
-    if (!token) throw new BadRequestException('Wrong request');
+    if (!token)
+      throw new BadRequestException('Wrong request token is require.');
     return await this.authService.verifyEmail(token);
   }
 }

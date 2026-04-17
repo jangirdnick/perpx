@@ -26,6 +26,10 @@ export class UserService {
         username: true,
         password: true,
         fullname: true,
+        avatar: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
