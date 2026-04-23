@@ -28,6 +28,7 @@ export class UserService {
         fullname: true,
         avatar: true,
         role: true,
+        subscription: true,
         createdAt: true,
         updatedAt: true,
       },

@@ -32,7 +32,13 @@ export class AuthGuard implements CanActivate {
           id: true,
           fullname: true,
           username: true,
+          avatar: true,
           email: true,
+          emailVerified: true,
+          role: true,
+          subscription: true,
+          createdAt: true,
+          updatedAt: true,
         },
       });
 

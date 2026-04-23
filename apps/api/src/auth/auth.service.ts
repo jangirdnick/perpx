@@ -16,6 +16,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { JWTCookiePayload, JwtQureyPayload } from './types/jwt.type';
 import { handleServiceError } from '../utils/errorHandler';
 import { User } from '../user/types/user.type';
+import type {
+  AuthRegisterResponse,
+  AuthSendVerificationEmailResponse,
+  AuthVerifyEmailResponse,
+} from '@perpx/shared';
+import { NewVerifyEmailDto } from './dto/newverifyemail.dto';
 
 @Injectable()
 export class AuthService {
@@ -31,7 +37,7 @@ export class AuthService {
     const refreshPayload = { sub: user.id, device: deviceId };
 
     const access_token = this.jwtService.sign(accessPayload, {
-      expiresIn: '15m',
+      expiresIn: '5m',
     });
     const refresh_token = this.jwtService.sign(refreshPayload, {
       expiresIn: '7d',
@@ -39,7 +45,9 @@ export class AuthService {
     return { access_token, refresh_token };
   }
 
-  async registerUser(registerDto: RegisterUserDto) {
+  async registerUser(
+    registerDto: RegisterUserDto,
+  ): Promise<AuthRegisterResponse> {
     // 1. Validation
     const existUser = await this.userService.findByEmailOrUsername(
       registerDto.email,
@@ -71,10 +79,9 @@ export class AuthService {
         success: true,
         message: `${user.fullname} registered successfully. Please verify your email.`,
         data: {},
-        error: null,
       };
     } catch (error) {
-      handleServiceError(
+      return handleServiceError(
         error,
         'Registration service failed. Please try again.',
       );
@@ -125,36 +132,34 @@ export class AuthService {
 
       return {
         success: true,
-        message: 'Login successfully',
+        message: '🎉 Login successfully.',
         data: {
           user: userWithoutPassword,
+          access_token: token.access_token,
+          refresh_token: token.refresh_token,
         },
-        access_token: token.access_token,
-        refresh_token: token.refresh_token,
       };
     } catch (error) {
-      handleServiceError(error, 'Login service failed. Please try again.');
+      return handleServiceError(
+        error,
+        'Login service failed. Please try again.',
+      );
     }
   }
 
-  async sendVerificationEmail(loginDto: LoginUserDto) {
+  async sendVerificationEmail(
+    newVerifyEmailDto: NewVerifyEmailDto,
+  ): Promise<AuthVerifyEmailResponse> {
     try {
-      const existUser = await this.userService.findByEmail(loginDto.email);
+      const existUser = await this.userService.findByEmail(
+        newVerifyEmailDto.email,
+      );
       if (!existUser)
         throw new NotFoundException('User not found. Check all credential.');
 
       if (existUser.emailVerified)
         throw new BadRequestException(
           `${existUser.fullname}  email allredy verified.`,
-        );
-
-      const isPasswordValid = await BcryptUtil.compair(
-        loginDto.password,
-        existUser.password,
-      );
-      if (!isPasswordValid)
-        throw new BadRequestException(
-          'Invalid credentials. Please check all credentials.',
         );
 
       const emailTokenData = { sub: existUser.id, email: existUser.email };
@@ -171,29 +176,33 @@ export class AuthService {
         success: true,
         message: `${existUser.fullname} verification email sent. Please verify your email.`,
         data: {},
-        error: null,
       };
     } catch (error) {
-      handleServiceError(
+      return handleServiceError(
         error,
         'Sending new verify email service failed. Please try again.',
       );
     }
   }
 
-  async verifyEmail(token: string) {
+  async verifyEmail(token: string): Promise<AuthSendVerificationEmailResponse> {
     try {
       const decodedToken = this.jwtService.verify<JwtQureyPayload>(token);
-      if (!decodedToken)
-        throw new BadRequestException('Invalid verifaction token token');
+      if (!decodedToken) {
+        throw new BadRequestException('Invalid verification token');
+      }
 
       const user = await this.prisma.user.findFirst({
         where: { id: decodedToken.sub, email: decodedToken.email },
       });
-      if (!user) throw new BadRequestException('Forbidden request');
 
-      if (user.emailVerified)
+      if (!user) {
+        throw new BadRequestException('Forbidden request');
+      }
+
+      if (user.emailVerified) {
         throw new BadRequestException('Email already verified');
+      }
 
       const updatedUser = await this.prisma.user.update({
         where: { id: user.id },
@@ -207,14 +216,13 @@ export class AuthService {
 
       return {
         success: true,
-        message: `${updatedUser.fullname} email verified successfull 🎉`,
+        message: `${updatedUser.fullname} email verified successfully 🎉`,
         data: {},
-        error: null,
       };
     } catch (error) {
-      handleServiceError(
+      return handleServiceError(
         error,
-        'Verifaction email service failed. Please try again.',
+        'Verification email service failed. Please try again.',
       );
     }
   }
@@ -240,6 +248,7 @@ export class AuthService {
               email: true,
               emailVerified: true,
               role: true,
+              subscription: true,
               createdAt: true,
               updatedAt: true,
             },
@@ -276,12 +285,12 @@ export class AuthService {
       return {
         data: {
           user: dbToken.user,
+          access_token: newToken.access_token,
+          refresh_token: newToken.refresh_token,
         },
-        access_token: newToken.access_token,
-        refresh_token: newToken.refresh_token,
       };
     } catch (error) {
-      handleServiceError(error, 'Refresh token service failed.');
+      return handleServiceError(error, 'Refresh token service failed.');
     }
   }
 
@@ -318,9 +327,13 @@ export class AuthService {
         },
       });
 
-      return true;
+      return {
+        success: true,
+        message: 'Logout successfully.',
+        data: {},
+      };
     } catch (error) {
-      handleServiceError(
+      return handleServiceError(
         error,
         'Logout user service failed. Please try again.',
       );
@@ -362,7 +375,7 @@ export class AuthService {
 
       return true;
     } catch (error) {
-      handleServiceError(
+      return handleServiceError(
         error,
         'Logout all devices service failed. Please try again.',
       );
