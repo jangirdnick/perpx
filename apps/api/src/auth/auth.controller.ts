@@ -14,7 +14,13 @@ import { RegisterUserDto } from './dto/register.dto';
 import { AuthService } from './auth.service';
 import { LoginUserDto } from './dto/login.dto';
 import { AuthGuard } from './guards/auth.guard';
-
+import {
+  AuthGetMeResponse,
+  AuthLoginResponse,
+  AuthRefreshTokenResponse,
+  AuthResponse,
+} from '@perpx/shared';
+import { NewVerifyEmailDto } from './dto/newverifyemail.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -28,10 +34,13 @@ export class AuthController {
   async loginUser(
     @Body() loginDto: LoginUserDto,
     @Res({ passthrough: true }) response: Response,
-  ) {
-    const user = await this.authService.loginUser(loginDto);
-    if (!user) throw new BadRequestException('Login service failed.');
-    response.cookie('token', user.refresh_token, {
+  ): Promise<AuthLoginResponse> {
+    const result = await this.authService.loginUser(loginDto);
+    if (!result) throw new BadRequestException('Login service failed.');
+    const { data, ...rest } = result;
+    const { refresh_token, ...safeData } = data;
+
+    response.cookie('token', refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -39,33 +48,39 @@ export class AuthController {
     });
 
     return {
-      ...user,
-      refresh_token: undefined,
-      data: user.data,
-      error: null,
+      ...rest,
+      success: true,
+      data: safeData,
     };
   }
 
   @Get('me')
   @UseGuards(AuthGuard)
-  getMe(@Req() request: Request) {
-    return {
+  getMe(@Req() request: Request): Promise<AuthGetMeResponse> {
+    if (!request.user) {
+      throw new BadRequestException('Bad request');
+    }
+
+    return Promise.resolve({
       success: true,
-      user: request.user,
-    };
+      message: 'User info fetch successful.',
+      data: {
+        user: request.user,
+      },
+    });
   }
 
   @Post('refresh')
   async refreshToken(
     @Res({ passthrough: true }) response: Response,
     @Req() request: Request,
-  ) {
+  ): Promise<AuthRefreshTokenResponse> {
     const token = request.cookies?.token as string;
     if (!token)
       throw new BadRequestException('Wrong request token is require.');
     const user = await this.authService.refreshToken(token);
     if (!user) throw new BadRequestException('Refresh token service failed.');
-    response.cookie('token', user.refresh_token, {
+    response.cookie('token', user.data.refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -74,47 +89,68 @@ export class AuthController {
 
     return {
       success: true,
-      access_token: user.access_token,
-      user: user.data.user,
+      message: 'Tokrn refresh successful.',
+      data: {
+        access_token: user.data.access_token,
+      },
     };
   }
 
   @Post('logout')
-  async logoutUser(@Req() request: Request, @Res() response: Response) {
+  @UseGuards(AuthGuard)
+  async logoutUser(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<AuthResponse> {
     const token = request.cookies?.token as string;
-    if (!token)
-      throw new BadRequestException('Wrong request token is require.');
     await this.authService.logoutUser(token);
     response.clearCookie('token');
     return {
       success: true,
       message: 'Logout successfully.',
+      data: {},
     };
   }
 
   @Post('logout-all')
-  async logoutAllDevices(@Req() request: Request, @Res() response: Response) {
+  @UseGuards(AuthGuard)
+  async logoutAllDevices(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<AuthResponse> {
     const token = request.cookies?.token as string;
-    if (!token)
-      throw new BadRequestException('Wrong request token is require.');
-
     await this.authService.logoutAllDevices(token);
     response.clearCookie('token');
     return {
       success: true,
-      message: 'Logged out all devices',
+      message: 'Logged out all devices successful.',
+      data: {},
     };
   }
 
   @Post('send/verification-email')
-  async sendVerificationEmail(@Body() loginDto: LoginUserDto) {
-    return await this.authService.sendVerificationEmail(loginDto);
+  async sendVerificationEmail(@Body() newVerifyEmailDto: NewVerifyEmailDto) {
+    return await this.authService.sendVerificationEmail(newVerifyEmailDto);
   }
 
-  @Post('verify-email')
-  async verifyEmail(@Query('token') token: string) {
-    if (!token)
-      throw new BadRequestException('Wrong request token is require.');
-    return await this.authService.verifyEmail(token);
+  @Get('verify-email')
+  async verifyEmail(@Query('token') token: string, @Res() response: Response) {
+    try {
+      const result = await this.authService.verifyEmail(token);
+
+      if (result.success) {
+        return response.redirect(
+          `${process.env.FRONTEND_URL}/account/login?verified=true&message=${encodeURIComponent(result.message)}`,
+        );
+      }
+
+      return response.redirect(
+        `${process.env.FRONTEND_URL}/account/login?verified=false&message=${encodeURIComponent(result.message)}`,
+      );
+    } catch {
+      return response.redirect(
+        `${process.env.FRONTEND_URL}/account/login?verified=false&message=${encodeURIComponent('Email verification failed')}`,
+      );
+    }
   }
 }

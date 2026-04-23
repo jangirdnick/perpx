@@ -1,10 +1,10 @@
 // src/types/express.d.ts
-import { AuthUser } from '../auth/types/authUser.type';
+import { User } from '@perpx/shared';
 
 declare global {
   namespace Express {
     interface Request {
-      user?: AuthUser;
+      user?: User;
     }
   }
 }
