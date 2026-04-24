@@ -6,13 +6,9 @@ export type JwtQureyPayload = {
 export type JwtPayload = {
   sub: string;
   fullname: string;
-  username: string;
   email: string;
   emailVerified: boolean;
-  avatar: string;
   role: string;
-  createdAt: string;
-  updatedAt: string;
 };
 
 export type JWTCookiePayload = {

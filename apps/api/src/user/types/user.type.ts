@@ -1,4 +1,4 @@
-import { UserRole } from '@prisma/client';
+import { SubscriptionPlan, UserRole } from '@prisma/client';
 
 export type User = {
   id: string;
@@ -8,6 +8,16 @@ export type User = {
   emailVerified: boolean;
   avatar: string | null;
   role: UserRole;
+  subscription: SubscriptionPlan;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type JWTUser = {
+  id: string;
+  fullname: string;
+  email: string;
+  emailVerified: boolean;
+  role: UserRole;
+  subscription: SubscriptionPlan;
 };

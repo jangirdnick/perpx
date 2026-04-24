@@ -8,12 +8,15 @@ import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { JwtPayload } from '../types/jwt.type';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../../redis/redis.service';
+import { User } from '@perpx/shared';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -26,6 +29,13 @@ export class AuthGuard implements CanActivate {
     try {
       // 🔐 verify token
       const decoded = this.jwtService.verify<JwtPayload>(token);
+
+      const cached = await this.redis.getObject<User>(`user:${decoded.sub}`);
+      if (cached) {
+        request.user = cached;
+        return true;
+      }
+
       const user = await this.prisma.user.findUnique({
         where: { id: decoded.sub },
         select: {
@@ -45,6 +55,8 @@ export class AuthGuard implements CanActivate {
       if (!user) {
         throw new UnauthorizedException('Invalid token');
       }
+
+      await this.redis.setObject(`user:${user.id}`, user, 900);
 
       request.user = user;
 
