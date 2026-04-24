@@ -1,4 +1,4 @@
-import { User } from './user.type';
+import { ResponseUser, User } from './user.type';
 
 export type ApiErrorResponse = {
   success: false;
@@ -22,7 +22,7 @@ export type ApiSuccess = {
 export type RegisterData = object;
 
 export type LoginData = {
-  user: User;
+  user: ResponseUser;
   access_token: string;
 };
 
