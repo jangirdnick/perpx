@@ -14,3 +14,11 @@ export type User = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type ResponseUser = {
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  role: UserRole;
+  subscription: SubscriptionPlan;
+};

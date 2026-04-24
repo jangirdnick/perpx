@@ -15,7 +15,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
 import { JWTCookiePayload, JwtQureyPayload } from './types/jwt.type';
 import { handleServiceError } from '../utils/errorHandler';
-import { User } from '../user/types/user.type';
+import { JWTUser } from '../user/types/user.type';
 import type {
   AuthRegisterResponse,
   AuthSendVerificationEmailResponse,
@@ -32,12 +32,12 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  private generateTokens(user: User, deviceId: string) {
+  private generateTokens(user: JWTUser, deviceId: string) {
     const accessPayload = { sub: user.id, ...user };
     const refreshPayload = { sub: user.id, device: deviceId };
 
     const access_token = this.jwtService.sign(accessPayload, {
-      expiresIn: '5m',
+      expiresIn: '15m',
     });
     const refresh_token = this.jwtService.sign(refreshPayload, {
       expiresIn: '7d',

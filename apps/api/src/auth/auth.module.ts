@@ -6,12 +6,14 @@ import { EmailModule } from '../email/email.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthGuard } from './guards/auth.guard';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
   imports: [
     UserModule,
     EmailModule,
     PrismaModule,
+    RedisModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
