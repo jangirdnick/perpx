@@ -1,48 +1,72 @@
-node_modules
-**/node_modules
+# Node modules
+node_modules/
+**/node_modules/
 .pnpm-store
 .pnpm-debug.log*
 
-.turbo
-**/.turbo
-
-
-.next
-**/.next
+# Build outputs
+dist/
+**/dist/
+.next/
+**/.next/
 out/
 **/out/
+build/
+**/build/
+coverage/
+**/coverage/
 
-coverage
-**/coverage
-
-logs
-*.log
-
-.DS_Store
-.vscode/
-.idea/
-
-.git
-**/.git
-
-*.tgz
-*.zip
-*.tar.gz
-tmp/
-temp/
-
-.cache
-**/.cache
+# Cache
+.turbo/
+**/.turbo/
+.cache/
+**/.cache/
 .eslintcache
 *.tsbuildinfo
 
-.env
-.env.*
-.env.local
-.env.production
-.env.development
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-.husky
-.prettierrc
-.prettierignore
-.eslintrc*
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Git
+.git/
+**/.git/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.*
+
+# Lock files (keep pnpm-lock.yaml)
+package-lock.json
+yarn.lock
+
+# Husky
+.husky/_
+
+# Prettier cache
+.prettier-cache
+
+# Archives
+*.tgz
+*.zip
+*.tar.gz
+
+# Temp files
+tmp/
+temp/

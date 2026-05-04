@@ -8,7 +8,7 @@
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api start:dev",
     "dev": "pnpm run dev:web & pnpm run dev:api",
-    "prepare": "husky"
+    "prepare": "if [ -d .git ]; then husky; fi"
   },
   "lint-staged": {
     "apps/api/**/*.{ts,js}": [
