@@ -1,19 +1,29 @@
-# Node modules
+# Dependencies
 node_modules/
 **/node_modules/
-
-
+.pnpm-store
+.pnpm-debug.log*
 
 # Build outputs
 dist/
-build/
-out/
 **/dist/
-**/build/
+.next/
+**/.next/
+out/
 **/out/
+build/
+**/build/
+
+# Turbo
+.turbo/
+**/.turbo/
+
+# Coverage
+coverage/
+**/coverage/
 
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -24,32 +34,42 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 
-# Environment variables
-.env
-.env.local
-.env.*.local
-
 # IDEs
 .vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace
 
-# Optional: package lock files (if you want to ignore in monorepo)
-package-lock.json
-yarn.lock
+# Git
+.git/
+**/.git/
 
-# Docker files (optional if you track Dockerfile separately)
-docker-compose.override.yml
+# Environment
+.env
+.env.local
+.env.*.local
+.env.*
 
-# Others
-*.tgz
-*.zip
+# Cache
+.cache/
+**/.cache/
+.eslintcache
+*.tsbuildinfo
 
+# Prettier
+.prettier-cache
 
 # Husky
 .husky/_
 
-# Prettier cache
-.prettier-cache
+# Temp files
+tmp/
+temp/
 
+# Archives
+*.tgz
+*.zip
+*.tar.gz
+
+# Docker
+docker-compose.override.yml

@@ -14,10 +14,11 @@ RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
 # Copy workspace files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/web/package.json ./apps/web/
+COPY apps/web/package.json ./apps/web/package.json
+COPY packages/shared/package.json ./packages/shared/package.json
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile --filter=web..
+# Install dependencies for web and all its workspace dependencies
+RUN pnpm install --frozen-lockfile --filter=web...
 
 # ----------------------------------------
 # Stage 2: Builder

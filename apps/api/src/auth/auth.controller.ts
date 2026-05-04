@@ -140,16 +140,16 @@ export class AuthController {
 
       if (result.success) {
         return response.redirect(
-          `${process.env.FRONTEND_URL}/account/login?verified=true&message=${encodeURIComponent(result.message)}`,
+          `${process.env.CLINT}/account/login?verified=true&message=${encodeURIComponent(result.message)}`,
         );
       }
 
       return response.redirect(
-        `${process.env.FRONTEND_URL}/account/login?verified=false&message=${encodeURIComponent(result.message)}`,
+        `${process.env.CLINT}/account/login?verified=false&message=${encodeURIComponent(result.message)}`,
       );
     } catch {
       return response.redirect(
-        `${process.env.FRONTEND_URL}/account/login?verified=false&message=${encodeURIComponent('Email verification failed')}`,
+        `${process.env.CLINT}/account/login?verified=false&message=${encodeURIComponent('Email verification failed')}`,
       );
     }
   }

@@ -1,8 +1,8 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  transpilePackages: ['@perpx/shared']
+  output: 'standalone',
+  transpilePackages: ['@perpx/shared'],
 };
 
 export default nextConfig;
