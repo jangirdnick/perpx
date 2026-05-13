@@ -10,6 +10,7 @@ import { JwtPayload } from '../types/jwt.type';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../redis/redis.service';
 import { User } from '@perpx/shared';
+import { AuthService } from '../auth.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -17,6 +18,7 @@ export class AuthGuard implements CanActivate {
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
+    private readonly authService: AuthService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

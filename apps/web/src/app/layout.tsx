@@ -7,8 +7,9 @@ import { Toaster } from 'sonner';
 import QueryProvider from '../lib/providers/query.provider';
 import AuthInitializer from '../lib/authInitializer';
 import AuthRedirectHandler from '../lib/authredirect';
+import { ThemeProvider } from '../components/theme-provider';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -39,23 +40,31 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={cn(
         'h-full',
         'antialiased',
         geistSans.variable,
         geistMono.variable,
         sora.variable,
-        'font-sans',
         inter.variable,
+        'font-sora',
       )}
     >
-      <body className="min-h-full flex flex-col dark">
+      <body className="min-h-full flex flex-col">
         <StoreProvider>
           <QueryProvider>
-            <AuthInitializer />
-            <AuthRedirectHandler />
-            <main>{children}</main>
-            <Toaster />
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <AuthInitializer />
+              <AuthRedirectHandler />
+              <main>{children}</main>
+              <Toaster />
+            </ThemeProvider>
           </QueryProvider>
         </StoreProvider>
       </body>

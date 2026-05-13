@@ -45,6 +45,14 @@ export class AuthService {
     return { access_token, refresh_token };
   }
 
+  verifyToken(token: string) {
+    try {
+      return this.jwtService.verify(token) as string | object;
+    } catch (err) {
+      return handleServiceError(err, 'Failed to verify token');
+    }
+  }
+
   async registerUser(
     registerDto: RegisterUserDto,
   ): Promise<AuthRegisterResponse> {
@@ -118,12 +126,10 @@ export class AuthService {
           'Token generation failed. Please try again.',
         );
 
-      const hashToken = await BcryptUtil.hash(token.access_token);
-
-      // Refresh token save database
+      const hashRefreshToken = await BcryptUtil.hash(token.refresh_token);
       await this.prisma.refreshToken.create({
         data: {
-          hashedToken: hashToken,
+          hashedToken: hashRefreshToken,
           deviceId,
           userId: existUser.id,
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
