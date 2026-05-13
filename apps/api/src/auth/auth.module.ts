@@ -7,6 +7,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthGuard } from './guards/auth.guard';
 import { RedisModule } from '../redis/redis.module';
+import { WsAuthGuard } from './guards/ws-auth.guard';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { RedisModule } from '../redis/redis.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, AuthGuard],
+  providers: [AuthService, AuthGuard, WsAuthGuard],
+  exports: [AuthService, AuthGuard, WsAuthGuard],
 })
 export class AuthModule {}

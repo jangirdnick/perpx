@@ -11,7 +11,7 @@ interface AccountLayoutProps {
 export default function AccountLayout({ children, sendnewemail }: AccountLayoutProps) {
   return (
     <GuestProvider>
-      <main className="relative">
+      <main className="relative dark:bg-black">
         {children}
         {sendnewemail}
       </main>

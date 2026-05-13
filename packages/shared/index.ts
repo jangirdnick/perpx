@@ -8,8 +8,9 @@ import type {
   AuthVerifyEmailResponse,
   AuthSendVerificationEmailResponse,
   AuthResponse,
-  ApiErrorResponse,
 } from './types/auth.type';
+
+import type { ApiErrorResponse } from './types/api.type';
 
 export const test = 'hello from shared';
 export type { User };

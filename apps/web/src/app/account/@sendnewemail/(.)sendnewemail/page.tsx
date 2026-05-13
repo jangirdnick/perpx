@@ -9,7 +9,7 @@ import { Button } from '../../../../components/ui/button';
 export default function SendNewEmailModal() {
   const router = useRouter();
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="mx-auto mt-24 max-w-md w-full rounded-md bg-linear-to-tr from-black/50 to-teal-800/50 backdrop-blur-md p-4 text-black border border-teal-200/5 shadow-inner shadow-teal-600/20">
         <Button
           onClick={() => router.back()}

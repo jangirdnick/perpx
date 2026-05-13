@@ -7,7 +7,7 @@ export default function Leftside() {
       max-lg:hidden overflow-hidden"
     >
       <div>
-        <h1 className="text-3xl text-slate-300">perpxity</h1>
+        <h1 className="text-3xl text-slate-300">perpx</h1>
       </div>
 
       <div className="space-y-10">

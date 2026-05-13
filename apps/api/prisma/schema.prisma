@@ -52,14 +52,15 @@ model RefreshToken {
   revoked     Boolean  @default(false)
   createdAt   DateTime @default(now())
 
-  @@index([userId])
+  @@unique([userId, deviceId])
+  @@index([expiresAt])
 }
 
 
 model Chat {
   id              String        @id @default(cuid())
   title           String
-  description     String
+  description     String?
   userId          String
   spaceId         String?
 
@@ -71,6 +72,7 @@ model Chat {
   updatedAt       DateTime      @updatedAt
 
   @@map("chat")
+  @@index([userId, createdAt])
 }
 
 
@@ -95,6 +97,8 @@ model Message {
   updatedAt       DateTime      @updatedAt
 
   @@map("message")
+  @@index([userId, createdAt])
+  @@index([chatId, createdAt])
 }
 
 
@@ -109,6 +113,8 @@ model Source {
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+
+  @@index([messageId])
 }
 
 enum SpaceType {
@@ -147,5 +153,9 @@ model SpaceMember {
 
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
+
+  @@unique([spaceId, userId])
+  @@index([spaceId])
+  @@index([userId])
 }
 

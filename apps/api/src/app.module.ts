@@ -8,6 +8,10 @@ import { EmailModule } from './email/email.module';
 import { JwtModule } from '@nestjs/jwt';
 import { RedisModule } from './redis/redis.module';
 import { ChatGateway } from './chat/chat/chat.gateway';
+import { ApiModule } from './api/api.module';
+import { ChatService } from './chat/chat.service';
+import { ChatModule } from './chat/chat.module';
+import { MessageModule } from './message/message.module';
 
 @Module({
   imports: [
@@ -23,8 +27,11 @@ import { ChatGateway } from './chat/chat/chat.gateway';
     UserModule,
     EmailModule,
     RedisModule,
+    ChatModule,
+    MessageModule,
+    ApiModule,
   ],
   controllers: [AppController],
-  providers: [ChatGateway],
+  providers: [ChatGateway, ChatService],
 })
 export class AppModule {}

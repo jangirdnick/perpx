@@ -21,7 +21,7 @@ const initialState: authState = {
   sessionExpired: false,
 };
 
-export const authSlice = createSlice({
+const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
