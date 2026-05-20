@@ -2,7 +2,7 @@ import { api } from '../../../lib/axios';
 import { ChatListResponse, ChatDeleteResponse } from '@perpx/shared/types/chat.type';
 import { MessageListResponse } from '@perpx/shared/types/message.type';
 
-export async function getUserChats(): Promise<ChatListResponse> {
+export async function getSidebarUserChats(): Promise<ChatListResponse> {
   const { data } = await api.get('/chat');
   return data;
 }

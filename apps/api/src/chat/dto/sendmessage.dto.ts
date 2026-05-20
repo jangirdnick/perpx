@@ -1,15 +1,39 @@
-import { IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsBoolean,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+
+class AttachmentDto {
+  @IsOptional()
+  @IsString()
+  fileUrl?: string;
+
+  @IsString()
+  type!: string;
+
+  @IsString()
+  name!: string;
+}
 
 export class SendMessageDto {
   @IsString()
   message!: string;
 
+  @IsOptional()
   @IsString()
   chatId?: string;
 
-  @IsString()
-  feature?: 'normal' | 'web_search' | 'file_rag';
+  @IsOptional()
+  @IsBoolean()
+  webSearch?: boolean;
 
-  @IsString()
-  model?: 'gemini' | 'mistral';
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AttachmentDto)
+  attachments?: AttachmentDto[];
 }

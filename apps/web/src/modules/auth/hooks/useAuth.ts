@@ -8,7 +8,7 @@ import {
   logoutApi,
   registerApi,
   sendNewVerifyEmailApi,
-} from '../apis/auth.api';
+} from '../api/auth.api';
 import { toast } from 'sonner';
 import {
   AuthLoginResponse,
@@ -16,7 +16,7 @@ import {
   AuthResponse,
   AuthSendVerificationEmailResponse,
 } from '@perpx/shared';
-import { getErrorMessage } from '../apis/auth.error.api';
+import { getErrorMessage } from '../api/auth.error.api';
 
 export const useRegester = () => {
   const qureyClient = useQueryClient();

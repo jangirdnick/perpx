@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useEffect, useCallback } from 'react';
-import { deleteChat, getChatMessages, getUserChats, renameChat } from '../api/chat.api';
+import { deleteChat, getChatMessages, getSidebarUserChats, renameChat } from '../api/chat.api';
 import { ChatDeleteResponse, ChatUpdateTitleResponse, Chat } from '@perpx/shared/types/chat.type';
-import { Message } from '@perpx/shared/types/message.type';
+import { Message, MessageListResponse } from '@perpx/shared/types/message.type';
 import { toast } from 'sonner';
-import { getErrorMessage } from '../../auth/apis/auth.error.api';
+import { getErrorMessage } from '../../auth/api/auth.error.api';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import {
   addMessage,
@@ -24,12 +24,12 @@ import { getSocket } from '../../../lib/socket';
 import { SendMessagePayload } from '@perpx/shared/types/message.type';
 import { useRouter } from 'next/navigation';
 
-export const useGetUserChats = () => {
+export const useGetSidebarUserChats = () => {
   const dispatch = useAppDispatch();
   return useQuery({
     queryKey: ['user-chats'],
     queryFn: async () => {
-      const data = await getUserChats();
+      const data = await getSidebarUserChats();
       if (data.success) {
         dispatch(setChats(data.data.chats as Chat[]));
       }
@@ -51,7 +51,7 @@ export const useGetChatMessages = (chatId: string) => {
       }
       return data;
     },
-    enabled: !!chatId,
+    enabled: !!chatId && chatId !== 'temp-chat',
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
   });
@@ -66,7 +66,11 @@ export const useRenameChat = () => {
     onSuccess: (data: ChatUpdateTitleResponse) => {
       if (data.success) {
         dispatch(
-          updateChatTitle({ id: data.data.id, title: data.data.title, updatedAt: new Date() }),
+          updateChatTitle({
+            id: data.data.id,
+            title: data.data.title,
+            updatedAt: new Date().toISOString(),
+          }),
         );
         queryClient.invalidateQueries({ queryKey: ['user-chats'] });
         toast.success(`${data.data.title.slice(0, 16)} renamed` || 'Chat renamed successfully.');
@@ -87,7 +91,7 @@ export const useDeleteChat = () => {
       if (data.success) {
         dispatch(deleteChatFromSlice(data.data.id));
         queryClient.invalidateQueries({ queryKey: ['user-chats'] });
-        toast.success(`${data.data.title} deleted` || 'Chat deleted successfull.');
+        toast.success(`${data.message}` || 'Chat deleted successfull.');
       }
     },
     onError: (err: unknown) => {
@@ -102,10 +106,45 @@ export const useChat = () => {
   const router = useRouter();
 
   const { access_token } = useAppSelector((s) => s.auth);
-  const tempHumanMsgIdRef = useRef(''); // Hook top level par add karein
-
-  // Streaming text ko component lifecycle se independent rakhne ke liye useRef use karenge
+  const tempHumanMsgIdRef = useRef('');
   const streamingMessageRef = useRef('');
+
+  // TanStack Cache ko manually update
+  const updateTanstackCache = useCallback(
+    (chatId: string, newMessage: Message) => {
+      queryClient.setQueryData<MessageListResponse | undefined>(
+        ['chat-messages', chatId],
+        (oldData) => {
+          if (!oldData || !oldData.success || !oldData.data) return oldData;
+
+          // Check karte hain ki message pehle se cache me hai ya nahi (Duplicates rokne ke liye)
+          const exists = oldData.data.messages.some((m: Message) => m.id === newMessage.id);
+
+          if (exists) {
+            return {
+              ...oldData,
+              data: {
+                ...oldData.data,
+                messages: oldData.data.messages.map((m: Message) =>
+                  m.id === newMessage.id ? newMessage : m,
+                ),
+              },
+            };
+          }
+
+          // Agar nahi hai, toh array me naya message push kar do
+          return {
+            ...oldData,
+            data: {
+              ...oldData.data,
+              messages: [...oldData.data.messages, newMessage],
+            },
+          };
+        },
+      );
+    },
+    [queryClient],
+  );
 
   useEffect(() => {
     const socket = getSocket(access_token);
@@ -114,7 +153,6 @@ export const useChat = () => {
       socket.connect();
     }
 
-    // Handlers define kar rahe hain
     const onStreamMessage = ({ token, chatId }: { token: string; chatId: string }) => {
       dispatch(setActiveChatId(chatId));
       dispatch(appendStreamingToken(token));
@@ -122,9 +160,6 @@ export const useChat = () => {
     };
 
     const onStreamEnd = ({ message }: { message: Message }) => {
-      // const fullMessage = streamingMessageRef.current;
-
-      // Stream end hone par full message ko permanently Redux me add kar do
       dispatch(
         addMessage({
           id: message.id,
@@ -136,32 +171,37 @@ export const useChat = () => {
         }),
       );
 
+      // UPDATE CACHE: AI ka message bhi cache me daal diya
+      updateTanstackCache(message.chatId, message);
+
       dispatch(clearStreamingMessage());
       dispatch(setIsStreaming(false));
       streamingMessageRef.current = '';
 
-      // Agar user home page par hai, toh usko chat URL par bhej do
       const currentUrl = new URL(window.location.href);
       if (currentUrl.searchParams.get('chatId') !== message.chatId) {
         router.push(`/?chatId=${message.chatId}`);
       }
 
-      // Sidebar history update karne ke liye sirf user-chats ko invalidate karo.
-      // DHYAN DEIN: Yahan chat-messages invalidate nahi kar rahe hain taaki Redux override na ho aur lag na aaye.
       queryClient.invalidateQueries({ queryKey: ['user-chats'] });
     };
 
     const onTitleGenerated = ({ title, chatId }: { title: string; chatId: string }) => {
-      dispatch(updateChatTitle({ id: chatId, title, updatedAt: new Date() }));
+      dispatch(updateChatTitle({ id: chatId, title, updatedAt: new Date().toISOString() }));
     };
 
     const onHumanMessage = ({ humanMessage }: { humanMessage: Message }) => {
+      dispatch(setActiveChatId(humanMessage.chatId));
+
       dispatch(
         updateHumanMessageId({
           tempId: tempHumanMsgIdRef.current,
           realMessage: humanMessage,
         }),
       );
+
+      // UPDATE CACHE: User ka final message bhi cache me daal diya
+      updateTanstackCache(humanMessage.chatId, humanMessage);
     };
 
     const onStreamError = ({ message }: { message: string }) => {
@@ -170,22 +210,20 @@ export const useChat = () => {
       dispatch(setIsStreaming(false));
     };
 
-    // Listeners attach karna (Ye sirf ek baar hoga jab hook mount hoga)
     socket.on('streamMessage', onStreamMessage);
-    socket.on('streamEnd', onStreamEnd);
     socket.on('humanMessage', onHumanMessage);
     socket.on('titleGenerated', onTitleGenerated);
+    socket.on('streamEnd', onStreamEnd);
     socket.on('streamError', onStreamError);
 
-    // Cleanup function: Jab component unmount ho tabhi listeners hatein
     return () => {
       socket.off('streamMessage', onStreamMessage);
-      socket.off('streamEnd', onStreamEnd);
       socket.off('humanMessage', onHumanMessage);
       socket.off('titleGenerated', onTitleGenerated);
+      socket.off('streamEnd', onStreamEnd);
       socket.off('streamError', onStreamError);
     };
-  }, [access_token, dispatch, queryClient, router]);
+  }, [access_token, dispatch, queryClient, router, updateTanstackCache]);
 
   const sendMessage = useCallback(
     (payload: SendMessagePayload) => {
@@ -197,18 +235,35 @@ export const useChat = () => {
       streamingMessageRef.current = '';
 
       const tempId = 'user-msg-' + Date.now();
-      tempHumanMsgIdRef.current = tempId; // ID save kar li reference ke liye
+      tempHumanMsgIdRef.current = tempId;
 
-      // 🔥 OPTIMISTIC UPDATE: User ka message turant screen par show karo bina server ka wait kiye
+      const targetChatId = payload.chatId || 'temp-chat';
+
+      if (!payload.chatId) {
+        dispatch(setActiveChatId(targetChatId));
+      }
+
+      let sources: { url: string; title: string; snippet: string }[] = [];
+      if (payload.attachments) {
+        sources = payload.attachments
+          .filter((attachment) => attachment.fileUrl)
+          .map((attachment) => ({
+            url: attachment.fileUrl!,
+            title: attachment.name,
+            snippet: attachment.type,
+          }));
+      }
+
       if (payload.message) {
         dispatch(
           addMessage({
             id: tempId,
             role: 'HUMAN',
             message: payload.message,
-            chatId: payload.chatId || 'temp-chat',
-            userId: 'user', // apna real user ID dal sakte ho
-            createdAt: new Date().toISOString(), // Date object hi chahiye, string nahi
+            chatId: targetChatId,
+            userId: 'user',
+            createdAt: new Date().toISOString(),
+            sources,
           }),
         );
       }

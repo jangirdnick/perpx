@@ -10,7 +10,6 @@ export class MessageController {
 
   @Get(':chatId')
   getChatMessages(@Param('chatId') id: string, @Req() req: Request) {
-    console.warn('message get');
     return this.messageService.getChatMessages(id, req.user!.id);
   }
 

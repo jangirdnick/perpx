@@ -72,7 +72,7 @@ export default function UserNav({ isCollapsed }: UserNavProps) {
           {/* User Info */}
           {!isCollapsed && (
             <div className="min-w-0 flex-1 text-left">
-              <p className="truncate text-sm text-muted-foreground font-medium">{user?.fullname}</p>
+              <p className="truncate text-xs text-muted-foreground font-medium">{user?.fullname}</p>
 
               <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
             </div>

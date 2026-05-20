@@ -91,7 +91,7 @@ export class ChatService {
     };
   }
 
-  async getUserChats(userId: string) {
+  async getSidebarUserChats(userId: string) {
     const chat = await this.prisma.chat.findMany({
       where: { userId },
       select: {
