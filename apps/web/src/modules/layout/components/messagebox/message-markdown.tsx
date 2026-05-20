@@ -2,6 +2,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { memo } from 'react';
 import { cn } from '../../../../lib/utils';
+import Link from 'next/link';
 
 interface MarkdownMessageProps {
   content: string;
@@ -44,8 +45,8 @@ const MarkdownMessage = memo(function MarkdownMessage({ content, isAI }: Markdow
         ),
         hr: () => <hr className="my-5 border-border" />,
         a: ({ href, children }) => (
-          <a
-            href={href}
+          <Link
+            href={href || ''}
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
@@ -54,7 +55,7 @@ const MarkdownMessage = memo(function MarkdownMessage({ content, isAI }: Markdow
             )}
           >
             {children}
-          </a>
+          </Link>
         ),
         table: ({ children }) => (
           <div className="my-4 overflow-hidden rounded-md border border-border">

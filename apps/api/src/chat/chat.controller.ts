@@ -18,8 +18,8 @@ export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Get()
-  async getUserChats(@Req() req: Request) {
-    return await this.chatService.getUserChats(req.user!.id);
+  async getSidebarUserChats(@Req() req: Request) {
+    return await this.chatService.getSidebarUserChats(req.user!.id);
   }
 
   @Get(':chatId')

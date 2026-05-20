@@ -64,7 +64,14 @@ const chatSlice = createSlice({
     },
 
     addMessage: (state, action: PayloadAction<Message>) => {
-      state.messages.push(action.payload);
+      const existingMsgIndex = state.messages.findIndex((m) => m.id === action.payload.id);
+
+      if (existingMsgIndex !== -1) {
+        state.messages[existingMsgIndex] = action.payload;
+        return;
+      } else {
+        state.messages.push(action.payload);
+      }
     },
 
     setIsStreaming: (state, action: PayloadAction<boolean>) => {

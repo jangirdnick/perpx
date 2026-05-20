@@ -28,7 +28,7 @@ import { TooltipProvider } from '../../../../components/ui/tooltip';
 import { cn } from '../../../../lib/utils';
 import { Button } from '../../../../components/ui/button';
 import UserNav from './user-nav';
-import { useGetUserChats } from '../../../chat/hooks/useChat';
+import { useGetSidebarUserChats } from '../../../chat/hooks/useChat';
 import ActionButton from './action-button';
 import { Skeleton } from '../../../../components/ui/skeleton';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
@@ -48,7 +48,7 @@ export default function LayoutNav() {
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
-  const { data, isLoading, error } = useGetUserChats();
+  const { data, isLoading, error } = useGetSidebarUserChats();
   const dispatch = useAppDispatch();
   const activeChatId = useAppSelector((state) => state.chat.activeChatId);
 
@@ -69,7 +69,7 @@ export default function LayoutNav() {
     <TooltipProvider>
       <Sidebar
         collapsible="icon"
-        className="max-w-50 border-r border-sidebar-border bg-sidebar text-sm"
+        className="max-w-32 md:max-w-50 border-r border-sidebar-border bg-sidebar text-sm z-999!"
       >
         <SidebarHeader>
           <div
@@ -179,7 +179,7 @@ export default function LayoutNav() {
                                 : 'opacity-40 group-hover/chat-item::opacity-80',
                             )}
                           />
-                          <span className="truncate text-ellipsis text-[11px] font-inter font-light">
+                          <span className="truncate text-ellipsis text-sm md:text-[11px] font-inter font-light">
                             {chat.title}
                           </span>
                         </Button>

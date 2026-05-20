@@ -5,14 +5,14 @@ export type Chat = {
   title: string;
   description: string;
   userId: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type UpdateTitleData = {
   id: string;
   title: string;
-  updatedAt: Date;
+  updatedAt: string;
 };
 
 export type DeleteChatData = {

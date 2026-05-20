@@ -12,6 +12,10 @@ import { ApiModule } from './api/api.module';
 import { ChatService } from './chat/chat.service';
 import { ChatModule } from './chat/chat.module';
 import { MessageModule } from './message/message.module';
+import { UploadService } from './upload/upload.service';
+import { UploadModule } from './upload/upload.module';
+import { VectorService } from './vector/vector.service';
+import { VectorModule } from './vector/vector.module';
 
 @Module({
   imports: [
@@ -30,8 +34,10 @@ import { MessageModule } from './message/message.module';
     ChatModule,
     MessageModule,
     ApiModule,
+    UploadModule,
+    VectorModule,
   ],
   controllers: [AppController],
-  providers: [ChatGateway, ChatService],
+  providers: [ChatGateway, ChatService, UploadService, VectorService],
 })
 export class AppModule {}
