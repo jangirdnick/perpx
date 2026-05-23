@@ -23,15 +23,45 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
+      - name: Verify AWS Identity
+        run: aws sts get-caller-identity
+
+      - name: Check ECS Services
+        run: |
+          aws ecs describe-services \
+            --cluster perpx-cluster \
+            --services perpx-web-service perpx-api-service \
+            --region ap-south-1
+
       - name: Deploy Frontend to Amazon ECS
         run: |
-          echo "Deploying Frontend (perpx-web-service)..."
-          aws ecs update-service --cluster perpx-cluster --service perpx-web-service --force-new-deployment
+          aws ecs update-service \
+            --cluster perpx-cluster \
+            --service perpx-web-service \
+            --force-new-deployment \
+            --region ap-south-1
 
       - name: Deploy Backend API to Amazon ECS
         run: |
-          echo "Deploying Backend API (perpx-api-service)..."
-          aws ecs update-service --cluster perpx-cluster --service perpx-api-service --force-new-deployment
+          aws ecs update-service \
+            --cluster perpx-cluster \
+            --service perpx-api-service \
+            --force-new-deployment \
+            --region ap-south-1
+
+      - name: Wait for Frontend Stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster perpx-cluster \
+            --services perpx-web-service \
+            --region ap-south-1
+
+      - name: Wait for Backend Stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster perpx-cluster \
+            --services perpx-api-service \
+            --region ap-south-1
 
       - name: Success Notification
         run: echo "🎉 Deployment triggered successfully on AWS ECS!"
