@@ -1,0 +1,37 @@
+name: AWS ECS Continuous Deployment
+
+on:
+  workflow_run:
+    workflows: ['Docker Build & Push']
+    branches: [main]
+    types:
+      - completed
+
+jobs:
+  deploy-to-aws:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Deploy Frontend to Amazon ECS
+        run: |
+          echo "Deploying Frontend (perpx-web-service)..."
+          aws ecs update-service --cluster perpx-cluster --service perpx-web-service --force-new-deployment
+
+      - name: Deploy Backend API to Amazon ECS
+        run: |
+          echo "Deploying Backend API (perpx-api-service)..."
+          aws ecs update-service --cluster perpx-cluster --service perpx-api-service --force-new-deployment
+
+      - name: Success Notification
+        run: echo "🎉 Deployment triggered successfully on AWS ECS!"

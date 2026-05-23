@@ -31,7 +31,9 @@ jobs:
         with:
           context: .
           file: docker/web.Dockerfile
-          push: true
+          push: true,
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/perpx-web:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/perpx-web:${{ github.sha }}
