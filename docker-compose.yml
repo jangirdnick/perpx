@@ -1,5 +1,6 @@
 services:
   api:
+    image: jangirdnick/perpx-api:latest
     build:
       context: .
       dockerfile: docker/api.Dockerfile
@@ -29,6 +30,7 @@ services:
       start_period: 15s
 
   web:
+    image: jangirdnick/perpx-web:latest
     build:
       context: .
       dockerfile: docker/web.Dockerfile

@@ -4,10 +4,12 @@
 
 /* @custom-variant dark (&:is(.dark *)); */
 
-@theme {
-  --font-sora: var(--font-sora);
+@theme inline {
+  --font-sans: var(--font-sora);
   --font-inter: var(--font-inter);
+  --font-sora: var(--font-sora);
 }
+
 
 @theme inline {
   --color-background: var(--background);
@@ -126,11 +128,12 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-sora)
-  }
+
   html {
-    @apply font-sans;
+    @apply h-full font-sans;
+  }
+
+  body {
+    @apply min-h-full bg-background text-foreground;
   }
 }

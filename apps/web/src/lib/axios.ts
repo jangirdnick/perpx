@@ -8,7 +8,7 @@ import {
   setSessionExpired,
 } from '../modules/auth/slices/authSlice';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
 interface RetryAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;

@@ -43,9 +43,12 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# Build Next.js application (standalone output)
-RUN cd apps/web && pnpm exec next build
+ARG NEXT_PUBLIC_API_URL
 
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+# Build Next.js application (standalone output)
+RUN cd apps/web && NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL pnpm exec next build
 # ----------------------------------------
 # Stage 3: Production Runner
 # ----------------------------------------
@@ -57,7 +60,7 @@ WORKDIR /app
 
 # Security: Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+  adduser --system --uid 1001 nextjs
 
 # Set production environment
 ENV NODE_ENV=production

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono, Inter, Sora } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import StoreProvider from '../lib/providers/store.provider';
@@ -9,21 +9,26 @@ import AuthInitializer from '../lib/authInitializer';
 import AuthRedirectHandler from '../lib/authredirect';
 import { ThemeProvider } from '../components/theme-provider';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
+const inter = localFont({
+  src: [
+    {
+      path: '../../public/fonts/inter/Inter-VariableFont_opsz,wght.ttf',
+      style: 'normal',
+    },
+  ],
+  variable: '--font-inter',
+  display: 'swap',
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
-
-const sora = Sora({
+const sora = localFont({
+  src: [
+    {
+      path: '../../public/fonts/sora/Sora-VariableFont_wght.ttf',
+      style: 'normal',
+    },
+  ],
   variable: '--font-sora',
-  subsets: ['latin'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -41,17 +46,9 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn(
-        'h-full',
-        'antialiased',
-        geistSans.variable,
-        geistMono.variable,
-        sora.variable,
-        inter.variable,
-        'font-sora',
-      )}
+      className={cn('h-full antialiased', inter.variable, sora.variable)}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col font-sora">
         <StoreProvider>
           <QueryProvider>
             <ThemeProvider
