@@ -25,6 +25,7 @@ import { useTheme } from 'next-themes';
 
 import { useAppSelector } from '../../../../store/hooks';
 import { Button } from '../../../../components/ui/button';
+import { useLogout } from '../../../auth/hooks/useAuth';
 
 interface UserNavProps {
   isCollapsed: boolean;
@@ -37,6 +38,7 @@ export default function UserNav({ isCollapsed }: UserNavProps) {
   const { setTheme } = useTheme();
 
   const { user } = useAppSelector((state) => state.auth);
+  const { mutate, isPending } = useLogout();
 
   const userInitial =
     user?.fullname
@@ -172,10 +174,15 @@ export default function UserNav({ isCollapsed }: UserNavProps) {
         <DropdownMenuSeparator className="my-2" />
 
         {/* Logout */}
-        <DropdownMenuItem variant="destructive" className={menuItemClass}>
+        <DropdownMenuItem
+          variant="destructive"
+          className={menuItemClass}
+          onClick={() => mutate()}
+          disabled={isPending}
+        >
           <HugeiconsIcon icon={Logout02Icon} className="size-4" />
 
-          <span>Sign out</span>
+          <span>{isPending ? 'Logging out...' : 'Sign out'}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

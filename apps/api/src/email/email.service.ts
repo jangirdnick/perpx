@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ResendService } from 'nestjs-resend';
-import { renderTemplate } from '../utils/renderTemplate';
+import { getVerificationTemplate } from './templates/verification.template';
 
 @Injectable()
 export class EmailService {
@@ -26,9 +26,7 @@ export class EmailService {
       this.configService.get<string>('API_URL') || process.env.BACKEND_API_URL;
     const verificationLink = `${baseUrl}/api/auth/verify-email?token=${token}`;
 
-    const html = renderTemplate('verification', {
-      verificationLink,
-    });
+    const html = getVerificationTemplate(verificationLink);
 
     try {
       const { data, error } = await this.resendService.emails.send({
@@ -43,12 +41,12 @@ export class EmailService {
         throw new Error(error.message);
       }
 
-      this.logger.warn(`Verification Email sent to ${email} (ID: ${data?.id})`);
+      this.logger.log(`Verification Email sent to ${email} (ID: ${data?.id})`);
       return data;
-    } catch (err) {
+    } catch (err: unknown) {
       this.logger.error('[Email Service Crash]:', err);
       throw new InternalServerErrorException(
-        (err as string) || 'Failed to send verification email',
+        (err as Error).message || 'Failed to send verification email',
       );
     }
   }
