@@ -81,7 +81,23 @@ export class AuthService {
         expiresIn: '1d',
       });
 
-      await this.emailService.sendVerificationEmail(user.email, emailToken);
+      try {
+        await this.emailService.sendVerificationEmail(user.email, emailToken);
+      } catch (emailError) {
+        console.error(
+          '❌ Production Email Trigger Failed, Rolling back user creation:',
+          emailError,
+        );
+
+        await this.prisma.user.delete({
+          where: { id: user.id },
+        });
+
+        throw new BadRequestException(
+          (emailError as Error).message ||
+            'Verification email sending failed. Registration rolled back.',
+        );
+      }
 
       return {
         success: true,
@@ -89,6 +105,7 @@ export class AuthService {
         data: {},
       };
     } catch (error) {
+      console.error('❌ Global Register Error:', error);
       return handleServiceError(
         error,
         'Registration service failed. Please try again.',
