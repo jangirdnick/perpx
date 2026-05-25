@@ -30,7 +30,7 @@ interface AuthenticatedSocket extends Socket {
 @Injectable()
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: process.env.CLINT,
   },
   namespace: '/chat',
 })

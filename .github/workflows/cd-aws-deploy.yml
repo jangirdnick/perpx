@@ -38,7 +38,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-def-web.json
-          container-name: web-container  # 👈 Apne AWS ECS container name se match kar lena
+          container-name: web-container 
           image: 238337501319.dkr.ecr.ap-south-1.amazonaws.com/perpx-web:latest
 
       # 3. Backend Task Definition me ECR ki latest image inject karo
@@ -47,7 +47,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-def-api.json
-          container-name: api-container  # 👈 Apne AWS ECS container name se match kar lena
+          container-name: api-container
           image: 238337501319.dkr.ecr.ap-south-1.amazonaws.com/perpx-api:latest
 
       # 4. Frontend ko deploy karo (Yeh automatic naya select karke force rollout karega)

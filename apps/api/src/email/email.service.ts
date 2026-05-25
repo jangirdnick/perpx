@@ -11,14 +11,14 @@ export class EmailService {
       throw new NotFoundException('Email & Token not found');
     }
 
-    const verificationLink = `http://localhost:3001/api/auth/verify-email?token=${token}`;
+    const verificationLink = `${process.env.BACKEND_API_URL}/api/auth/verify-email?token=${token}`;
 
     const html = renderTemplate('verification', {
       verificationLink,
     });
 
     const { data, error } = await this.resendService.emails.send({
-      from: 'Perpx <onboarding@resend.dev>',
+      from: 'PerpX <no-reply@nickdstudio.online>',
       to: email,
       subject: 'Verify email',
       html,
