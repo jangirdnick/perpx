@@ -11,7 +11,6 @@ export const handleServiceError = (
   error: any,
   defaultMsg = 'Operation failed',
 ) => {
-  console.error(`❌ [Service Error]:`, error);
   if (error instanceof BadRequestException) throw error;
   if (error instanceof UnauthorizedException) throw error;
   if (error instanceof ForbiddenException) throw error;

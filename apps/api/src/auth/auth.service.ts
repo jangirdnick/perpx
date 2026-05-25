@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -25,6 +26,8 @@ import { NewVerifyEmailDto } from './dto/newverifyemail.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly userService: UserService,
     private readonly emailService: EmailService,
@@ -84,10 +87,7 @@ export class AuthService {
       try {
         await this.emailService.sendVerificationEmail(user.email, emailToken);
       } catch (emailError) {
-        console.error(
-          '❌ Production Email Trigger Failed, Rolling back user creation:',
-          emailError,
-        );
+        this.logger.error('Email Service Crash:', emailError);
 
         await this.prisma.user.delete({
           where: { id: user.id },
@@ -105,7 +105,7 @@ export class AuthService {
         data: {},
       };
     } catch (error) {
-      console.error('❌ Global Register Error:', error);
+      this.logger.error('Global Register Error:', error);
       return handleServiceError(
         error,
         'Registration service failed. Please try again.',
