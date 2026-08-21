@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'perpx-storage-2026.s3.ap-south-1.amazonaws.com',
+        hostname: 'nicks-all-project.s3.ap-south-1.amazonaws.com',
       },
     ],
   },
