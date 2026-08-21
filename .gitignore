@@ -43,6 +43,7 @@ Thumbs.db
 # Git
 .git/
 **/.git/
+git/
 
 # Environment
 .env

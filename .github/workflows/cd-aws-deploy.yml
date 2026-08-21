@@ -21,49 +21,44 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Verify AWS Identity
         run: aws sts get-caller-identity
 
-      # 1. AWS se current Task Definitions ko download karo taaki usme nayi image inject kar sakein
       - name: Download Active Task Definitions
         run: |
           aws ecs describe-task-definition --task-definition perpx-web-task --query taskDefinition > task-def-web.json
           aws ecs describe-task-definition --task-definition perpx-api-task --query taskDefinition > task-def-api.json
 
-      # 2. Frontend Task Definition me ECR ki latest image inject karo
       - name: Render New Frontend Task Definition
         id: render-web
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-def-web.json
-          container-name: web-container 
-          image: 238337501319.dkr.ecr.ap-south-1.amazonaws.com/perpx-web:latest
+          container-name: perpx-web-container
+          image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/perpx-web:latest
 
-      # 3. Backend Task Definition me ECR ki latest image inject karo
       - name: Render New Backend Task Definition
         id: render-api
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-def-api.json
-          container-name: api-container
-          image: 238337501319.dkr.ecr.ap-south-1.amazonaws.com/perpx-api:latest
+          container-name: perpx-api-container
+          image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/perpx-api:latest
 
-      # 4. Frontend ko deploy karo (Yeh automatic naya select karke force rollout karega)
       - name: Deploy Frontend to Amazon ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.render-web.outputs.task-definition }}
-          service: perpx-web-service
+          service: perpx-web-task-service-7l7750w7
           cluster: perpx-cluster
-          wait-for-service-stability: true # Separate stability wait steps ki zaroorat nahi hai, ye khud handle karega
+          wait-for-service-stability: true
 
-      # 5. Backend ko deploy karo
       - name: Deploy Backend API to Amazon ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.render-api.outputs.task-definition }}
-          service: perpx-api-service
+          service: perpx-api-task-service-b7egg20l
           cluster: perpx-cluster
           wait-for-service-stability: true

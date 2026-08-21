@@ -16,47 +16,44 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. AWS Credentials Configure karo
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      # 2. AWS ECR me Login karo
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 3. Docker Buildx Setup
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v4
 
-      # 🔹 4. Build and Push Web to AWS ECR (Fully Secure via Secrets)
       - name: Build and Push Web
         uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/web.Dockerfile
           push: true
+          platforms: linux/amd64
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_BACKEND_API_URL=${{ secrets.NEXT_PUBLIC_BACKEND_API_URL }}
           tags: |
-            238337501319.dkr.ecr.ap-south-1.amazonaws.com/perpx-web:latest
-            238337501319.dkr.ecr.ap-south-1.amazonaws.com/perpx-web:${{ github.sha }}
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/perpx-web:latest
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/perpx-web:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # 🔹 5. Build and Push API to AWS ECR
       - name: Build and Push API
         uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/api.Dockerfile
           push: true
+          platforms: linux/amd64
           tags: |
-            238337501319.dkr.ecr.ap-south-1.amazonaws.com/perpx-api:latest
-            238337501319.dkr.ecr.ap-south-1.amazonaws.com/perpx-api:${{ github.sha }}
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/perpx-api:latest
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/perpx-api:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
