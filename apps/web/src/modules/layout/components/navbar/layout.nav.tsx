@@ -293,6 +293,8 @@ export default function LayoutNav() {
               size="icon-lg"
               className={cn(
                 isCollapsed && 'z-10 opacity-0 duration-300 ease-in group-hover:opacity-100',
+                isCollapsed ? 'rotate-180' : '',
+                'brightness-50 hover:brightness-100',
               )}
             />
           </div>
