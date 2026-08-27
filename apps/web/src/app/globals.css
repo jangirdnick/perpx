@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 /* @import "shadcn/tailwind.css"; */
 
 /* @custom-variant dark (&:is(.dark *)); */
@@ -9,7 +9,6 @@
   --font-inter: var(--font-inter);
   --font-sora: var(--font-sora);
 }
-
 
 @theme inline {
   --color-background: var(--background);
@@ -91,7 +90,7 @@
 }
 
 .dark {
-  --background: oklch(0.21 0 0);
+  --background: oklch(0 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -137,3 +136,53 @@
     @apply min-h-full bg-background text-foreground;
   }
 }
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: 1px;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  /* display: none; */
+  width: 5px;
+
+  /* background-color: #ffffff11 */
+}
+
+.scrollbar-hide::-webkit-scrollbar-thumb {
+  background: #ffffff0f;
+}
+
+/* Custom sleek scrollbar for Message Box, Code Blocks & Tables */
+.message-scrollbar {
+  scrollbar-width: 1px;
+  scrollbar-color: #ffffff0f transparent;
+}
+
+.message-scrollbar::-webkit-scrollbar {
+  width: 0.5px;
+  height: 0.5px !important;
+}
+/* 
+.message-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 9999px;
+} */
+/* 
+.message-scrollbar::-webkit-scrollbar-thumb {
+  background: #ffffff0f;
+  border-radius: 9999px;
+  transition: background 0.2s ease-in-out;
+}
+
+.dark .message-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.message-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 140, 150, 0.5);
+}
+
+.dark .message-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+} */

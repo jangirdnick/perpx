@@ -37,7 +37,7 @@ export function UploadedFilesPreview({ files, onRemoveFile }: UploadedFilesPrevi
             type="button"
             onClick={() => onRemoveFile(index)}
             aria-label={`Remove ${item.name.slice(0, 16) || 'file'}`}
-            className="absolute right-1 top-1 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-destructive/10 text-muted-foreground backdrop-blur-sm transition-all hover:text-foreground"
+            className="absolute right-1 top-1 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-destructive/10 text-muted-foreground transition-all hover:bg-destructive/20 hover:text-foreground"
           >
             <HugeiconsIcon icon={Cancel01Icon} size={12} />
           </button>

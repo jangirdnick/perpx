@@ -91,6 +91,18 @@ export class ChatService {
     };
   }
 
+  async updateTimestamp(chatId: string) {
+    const chat = await this.prisma.chat.update({
+      where: { id: chatId },
+      data: { updatedAt: new Date() },
+      select: {
+        id: true,
+        updatedAt: true,
+      },
+    });
+    return chat;
+  }
+
   async getSidebarUserChats(userId: string) {
     const chat = await this.prisma.chat.findMany({
       where: { userId },
@@ -102,7 +114,7 @@ export class ChatService {
         createdAt: true,
         updatedAt: true,
       },
-      take: 15,
+      take: 25,
       orderBy: {
         updatedAt: 'desc',
       },

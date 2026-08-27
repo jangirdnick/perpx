@@ -1,4 +1,3 @@
-import React from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowUp02Icon, Globe02Icon, Mic01Icon } from '@hugeicons/core-free-icons';
 import { Textarea } from '../../../../components/ui/textarea';
@@ -39,7 +38,7 @@ export function ChatComposer({
   onRemoveFile,
 }: ChatComposerProps) {
   return (
-    <div className="w-full rounded-md border border-border/80 bg-card/95 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/80">
+    <div className="w-full rounded-2xl border border-border/80 bg-card/80 backdrop-blur shadow-xs">
       <UploadedFilesPreview files={files} onRemoveFile={onRemoveFile} />
 
       <div className="px-4 pt-4">
@@ -99,7 +98,7 @@ export function ChatComposer({
               : 'bg-muted text-muted-foreground',
           )}
         >
-          <HugeiconsIcon icon={ArrowUp02Icon} size={14} />
+          <HugeiconsIcon icon={ArrowUp02Icon} size={14} strokeWidth={2.5} />
         </Button>
       </div>
     </div>

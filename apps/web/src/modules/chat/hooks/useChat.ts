@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useEffect, useCallback } from 'react';
 import { deleteChat, getChatMessages, getSidebarUserChats, renameChat } from '../api/chat.api';
-import { ChatDeleteResponse, ChatUpdateTitleResponse, Chat } from '@perpx/shared/types/chat.type';
+import {
+  ChatDeleteResponse,
+  ChatUpdateTitleResponse,
+  Chat,
+  ChatListResponse,
+} from '@perpx/shared/types/chat.type';
 import { Message, MessageListResponse } from '@perpx/shared/types/message.type';
 import { toast } from 'sonner';
 import { getErrorMessage } from '../../auth/api/auth.error.api';
@@ -26,11 +31,23 @@ import { useRouter } from 'next/navigation';
 
 export const useGetSidebarUserChats = () => {
   const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: ['user-chats'],
     queryFn: async () => {
       const data = await getSidebarUserChats();
       if (data.success) {
+        const oldData = queryClient.getQueryData<ChatListResponse>(['user-chats']);
+        if (oldData?.success && oldData.data?.chats) {
+          const oldMap = new Map(oldData.data.chats.map((c: Chat) => [c.id, c.updatedAt]));
+          data.data.chats = data.data.chats.map((c: Chat) => {
+            const oldUpdated = oldMap.get(c.id);
+            if (oldUpdated && new Date(oldUpdated) > new Date(c.updatedAt)) {
+              return { ...c, updatedAt: oldUpdated };
+            }
+            return c;
+          });
+        }
         dispatch(setChats(data.data.chats as Chat[]));
       }
       return data;
@@ -146,6 +163,21 @@ export const useChat = () => {
     [queryClient],
   );
 
+  const updateChatListTimestamp = useCallback(
+    (chatId: string, updatedAt: string) => {
+      queryClient.setQueryData(['user-chats'], (oldData: ChatListResponse) => {
+        if (!oldData || !oldData.success || !oldData.data || !oldData.data.chats) return oldData;
+        const chats = [...oldData.data.chats];
+        const index = chats.findIndex((c: Chat) => c.id === chatId);
+        if (index !== -1) {
+          chats[index] = { ...chats[index], updatedAt };
+        }
+        return { ...oldData, data: { ...oldData.data, chats } };
+      });
+    },
+    [queryClient],
+  );
+
   useEffect(() => {
     const socket = getSocket(access_token);
 
@@ -173,6 +205,7 @@ export const useChat = () => {
 
       // UPDATE CACHE: AI ka message bhi cache me daal diya
       updateTanstackCache(message.chatId, message);
+      updateChatListTimestamp(message.chatId, message.createdAt);
 
       dispatch(clearStreamingMessage());
       dispatch(setIsStreaming(false));
@@ -187,7 +220,18 @@ export const useChat = () => {
     };
 
     const onTitleGenerated = ({ title, chatId }: { title: string; chatId: string }) => {
-      dispatch(updateChatTitle({ id: chatId, title, updatedAt: new Date().toISOString() }));
+      const newUpdatedAt = new Date().toISOString();
+      dispatch(updateChatTitle({ id: chatId, title, updatedAt: newUpdatedAt }));
+
+      queryClient.setQueryData(['user-chats'], (oldData: ChatListResponse) => {
+        if (!oldData || !oldData.success || !oldData.data || !oldData.data.chats) return oldData;
+        const chats = [...oldData.data.chats];
+        const index = chats.findIndex((c: Chat) => c.id === chatId);
+        if (index !== -1) {
+          chats[index] = { ...chats[index], title, updatedAt: newUpdatedAt };
+        }
+        return { ...oldData, data: { ...oldData.data, chats } };
+      });
     };
 
     const onHumanMessage = ({ humanMessage }: { humanMessage: Message }) => {
@@ -202,6 +246,7 @@ export const useChat = () => {
 
       // UPDATE CACHE: User ka final message bhi cache me daal diya
       updateTanstackCache(humanMessage.chatId, humanMessage);
+      updateChatListTimestamp(humanMessage.chatId, humanMessage.createdAt);
     };
 
     const onStreamError = ({ message }: { message: string }) => {
@@ -223,7 +268,7 @@ export const useChat = () => {
       socket.off('streamEnd', onStreamEnd);
       socket.off('streamError', onStreamError);
     };
-  }, [access_token, dispatch, queryClient, router, updateTanstackCache]);
+  }, [access_token, dispatch, queryClient, router, updateTanstackCache, updateChatListTimestamp]);
 
   const sendMessage = useCallback(
     (payload: SendMessagePayload) => {
@@ -266,11 +311,12 @@ export const useChat = () => {
             sources,
           }),
         );
+        updateChatListTimestamp(targetChatId, new Date().toISOString());
       }
 
       socket.emit('sendMessage', payload);
     },
-    [access_token, dispatch],
+    [access_token, dispatch, updateChatListTimestamp],
   );
 
   return { sendMessage };

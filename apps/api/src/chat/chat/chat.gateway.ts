@@ -124,6 +124,8 @@ export class ChatGateway
         sources,
       });
 
+      await this.chatService.updateTimestamp(chat.data.chat.id);
+
       client.emit('humanMessage', { humanMessage });
 
       const dbMessages = await this.messageService.getLastMessages(

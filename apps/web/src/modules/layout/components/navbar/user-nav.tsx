@@ -53,8 +53,8 @@ export default function UserNav({ isCollapsed }: UserNavProps) {
       <DropdownMenuTrigger asChild>
         <Button
           className={`
-            flex w-full h-fit items-center gap-3 rounded-xl
-            py-1
+            flex w-full h-fit items-center gap-2 rounded-xl
+            py-1 px-1
             transition-all duration-200
             bg-transparent
             hover:bg-accent
@@ -84,8 +84,8 @@ export default function UserNav({ isCollapsed }: UserNavProps) {
 
       <DropdownMenuContent
         align="end"
-        sideOffset={10}
-        className="w-80 rounded-2xl border bg-background p-2 shadow-2xl"
+        sideOffset={15}
+        className="w-80 rounded-2xl border bg-sidebar/95 backdrop-blur-md p-2 ml-1 z-9999"
       >
         {/* User Card */}
         <div className="flex items-center gap-3 rounded-xl p-3">
@@ -150,7 +150,7 @@ export default function UserNav({ isCollapsed }: UserNavProps) {
             <span>Appearance</span>
           </DropdownMenuSubTrigger>
 
-          <DropdownMenuSubContent className="w-48 rounded-xl p-2">
+          <DropdownMenuSubContent className="w-48 rounded-xl p-2 -mt-10 ml-5 bg-sidebar/95 backdrop-blur-md border z-50">
             <DropdownMenuItem onClick={() => setTheme('light')} className={menuItemClass}>
               <HugeiconsIcon icon={Sun03Icon} className={menuIconClass} />
 

@@ -22,13 +22,13 @@ export default function ActionButton({ chatId }: ActionButtonProps) {
         <Button
           size="icon"
           variant={'outline'}
-          className="bg-primary border-none outline-none backdrop-blur-md"
+          className="bg-muted hover:bg-muted/80 border-border outline-none"
         >
           <HugeiconsIcon icon={MoreHorizontalIcon} size={8} />
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="w-60">
+      <DropdownMenuContent className="z-9999">
         <DropdownMenuItem>
           <HugeiconsIcon icon={Pen01Icon} />
           Rename

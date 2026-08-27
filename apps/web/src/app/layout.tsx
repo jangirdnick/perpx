@@ -48,7 +48,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn('h-full antialiased', inter.variable, sora.variable)}
     >
-      <body className="min-h-full flex flex-col font-sora">
+      <body className="min-h-full flex flex-col font-sora dark:bg-black">
         <StoreProvider>
           <QueryProvider>
             <ThemeProvider

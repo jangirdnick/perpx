@@ -27,7 +27,7 @@ export default function FileSelector({ onFileChange }: FileSelectorProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="icon" variant="outline" type="button">
+        <Button size="icon" variant="outline" type="button" className="rounded-full">
           <HugeiconsIcon icon={PlusSignIcon} size={14} />
         </Button>
       </DropdownMenuTrigger>
