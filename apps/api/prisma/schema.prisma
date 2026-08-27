@@ -127,7 +127,7 @@ model Space {
   id              String        @id @default(cuid())
   
   title           String
-  description     String
+  description     String?
   type            SpaceType     @default(PRIVATE)
 
   chats           Chat[]

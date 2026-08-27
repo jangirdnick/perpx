@@ -16,6 +16,7 @@ import { UploadService } from './upload/upload.service';
 import { UploadModule } from './upload/upload.module';
 import { VectorService } from './vector/vector.service';
 import { VectorModule } from './vector/vector.module';
+import { SpaceModule } from './space/space.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { VectorModule } from './vector/vector.module';
     ApiModule,
     UploadModule,
     VectorModule,
+    SpaceModule,
   ],
   controllers: [AppController],
   providers: [ChatGateway, ChatService, UploadService, VectorService],

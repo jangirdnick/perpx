@@ -71,3 +71,5 @@ yarn.lock
 # Temp files
 tmp/
 temp/
+
+memory/
