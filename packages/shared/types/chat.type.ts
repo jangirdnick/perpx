@@ -1,10 +1,13 @@
 import { ApiSuccess, ApiSuccessResponse, ApiErrorResponse } from './api.type';
+import { Space } from './space.type';
 
 export type Chat = {
   id: string;
   title: string;
   description: string;
   userId: string;
+  spaceId?: string | null;
+  space?: Space | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -22,5 +25,6 @@ export type DeleteChatData = {
 
 export type ChatResponse = ApiSuccessResponse<{ chat: Chat }> | ApiErrorResponse;
 export type ChatListResponse = ApiSuccessResponse<{ chats: Chat[] }> | ApiErrorResponse;
+export type ChatHistoryResponse = ApiSuccessResponse<{ chats: Chat[]; nextCursor: string | null }> | ApiErrorResponse;
 export type ChatDeleteResponse = ApiSuccessResponse<DeleteChatData> | ApiErrorResponse;
-export type ChatUpdateTitleResponse = ApiSuccessResponse<UpdateTitleData> | ApiErrorResponse;
+export type ChatUpdateTitleResponse = ApiSuccessResponse<{ chat: Chat }> | ApiErrorResponse;

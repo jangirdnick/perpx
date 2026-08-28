@@ -63,7 +63,7 @@ export class SpaceService {
     }
   }
 
-  async getUserSpaces(userId: string) {
+  async getUserSpaces(userId: string, cursor?: string, limit: number = 20) {
     const spaces = await this.prisma.space.findMany({
       where: {
         spaceMembers: {
@@ -87,16 +87,25 @@ export class SpaceService {
           },
         },
       },
-      take: 10,
+      take: limit + 1,
+      skip: cursor ? 1 : 0,
+      cursor: cursor ? { id: cursor } : undefined,
       orderBy: {
         updatedAt: 'desc',
       },
     });
 
+    let nextCursor: string | null = null;
+    if (spaces.length > limit) {
+      spaces.pop();
+      nextCursor = spaces[spaces.length - 1].id;
+    }
+
     return {
       success: true,
       data: {
         spaces,
+        nextCursor,
       },
       message: 'Spaces retrieved successfully',
     };
@@ -163,6 +172,37 @@ export class SpaceService {
         space,
       },
       message: 'Space retrieved successfully',
+    };
+  }
+
+  async deleteSpace(spaceId: string, userId: string) {
+    const space = await this.prisma.space.findUnique({
+      where: { id: spaceId },
+      select: {
+        id: true,
+        spaceMembers: {
+          where: { userId },
+          select: { role: true },
+        },
+      },
+    });
+
+    if (!space) {
+      throw new NotFoundException('Space not found');
+    }
+
+    const member = space.spaceMembers[0];
+    if (!member || member.role !== SpaceMemberRole.ADMIN) {
+      throw new ForbiddenException('Only space admins can delete this space');
+    }
+
+    await this.prisma.space.delete({
+      where: { id: spaceId },
+    });
+
+    return {
+      success: true,
+      message: 'Space deleted successfully',
     };
   }
 }

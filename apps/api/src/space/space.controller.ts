@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -19,7 +20,11 @@ export class SpaceController {
 
   @Get()
   async getUserSpaces(@Req() req: Request) {
-    return await this.spaceService.getUserSpaces(req.user!.id);
+    const cursor = req.query.cursor as string | undefined;
+    const limit = req.query.limit
+      ? parseInt(req.query.limit as string, 10)
+      : 20;
+    return await this.spaceService.getUserSpaces(req.user!.id, cursor, limit);
   }
 
   @Get(':spaceId')
@@ -33,5 +38,10 @@ export class SpaceController {
     @Req() req: Request,
   ) {
     return await this.spaceService.createSpace(req.user!.id, createSpaceDto);
+  }
+
+  @Delete(':spaceId')
+  async deleteSpace(@Param('spaceId') spaceId: string, @Req() req: Request) {
+    return await this.spaceService.deleteSpace(spaceId, req.user!.id);
   }
 }

@@ -1,6 +1,7 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import authSlice from '../modules/auth/slices/authSlice';
 import chatSlice from '@/modules/chat/slices/chatSlice';
+import spaceChatSlice from '@/modules/chat/slices/spaceChatSlice';
 import { persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import persistStore from 'redux-persist/es/persistStore';
@@ -21,6 +22,7 @@ const rootReducer = combineReducers({
   auth: authSlice,
   // chatReducer par persist lagaya
   chat: persistReducer(chatPersistConfig, chatSlice),
+  spaceChat: spaceChatSlice,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

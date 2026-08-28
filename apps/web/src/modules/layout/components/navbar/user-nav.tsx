@@ -57,7 +57,7 @@ export default function UserNav({ isCollapsed }: UserNavProps) {
             py-1 px-1
             transition-all duration-200
             bg-transparent
-            hover:bg-accent
+            hover:bg-accent/40
             // focus:outline-none
             // focus:ring-2 focus:ring-ring
           `}
@@ -75,7 +75,6 @@ export default function UserNav({ isCollapsed }: UserNavProps) {
           {!isCollapsed && (
             <div className="min-w-0 flex-1 text-left">
               <p className="truncate text-xs text-muted-foreground font-medium">{user?.fullname}</p>
-
               <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
             </div>
           )}

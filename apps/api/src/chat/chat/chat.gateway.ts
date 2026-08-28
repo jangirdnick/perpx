@@ -87,7 +87,7 @@ export class ChatGateway
     try {
       const chat = payload.chatId
         ? await this.chatService.findById(payload.chatId, userId)
-        : await this.chatService.createChat(userId);
+        : await this.chatService.createChat(userId, payload.spaceId);
 
       const pdfFile =
         payload.attachments?.filter(
@@ -163,6 +163,8 @@ export class ChatGateway
         chat.data.chat.id,
       );
 
+      const spaceContext = chat.data.chat.space?.description || undefined;
+
       if (payload.webSearch) {
         await this.aiService.streamWebSearchResponse(
           chatHistory,
@@ -181,6 +183,7 @@ export class ChatGateway
               sources,
             );
           },
+          spaceContext,
         );
       } else {
         await this.aiService.streamNormalResponse(
@@ -198,6 +201,7 @@ export class ChatGateway
               full,
             );
           },
+          spaceContext,
         );
       }
     } catch (err) {
@@ -237,7 +241,16 @@ export class ChatGateway
         payload.message,
         'mistral',
       );
-      await this.chatService.updateTitle(chatId, title, userId);
+      if (payload.spaceId) {
+        await this.chatService.updateSpaceChat(
+          payload.spaceId,
+          chatId,
+          userId,
+          title,
+        );
+      } else {
+        await this.chatService.updateTitle(chatId, title, userId);
+      }
       client.emit('titleGenerated', { title, chatId });
     }
     if (message?.id) {

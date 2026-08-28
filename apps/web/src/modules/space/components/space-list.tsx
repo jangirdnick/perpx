@@ -1,7 +1,8 @@
 'use client';
 
+import { useRef, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useGetSpaces } from '../hooks/useSpace';
+import { useInfiniteSpaces } from '../hooks/useSpace';
 import { Space } from '@perpx/shared';
 import { Skeleton } from '@/components/ui/skeleton';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -41,7 +42,60 @@ function getVisibilityIcon(type: 'PUBLIC' | 'PRIVATE' | 'GROUP') {
 }
 
 export function SpaceList() {
-  const { data, isLoading, isError, refetch } = useGetSpaces();
+  const DEFAULT_LIMIT = 15; // 7 rows * 3 cols
+  const MIN_LIMIT = 12; // 4 rows * 3 cols
+  const CARD_HEIGHT = 160;
+  const RESERVED_HEIGHT = 200;
+
+  const [limit, setLimit] = useState(DEFAULT_LIMIT);
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const availableHeight = window.innerHeight - RESERVED_HEIGHT;
+      const columns = window.innerWidth >= 1024 ? 3 : window.innerWidth >= 640 ? 2 : 1;
+      const rows = Math.ceil(availableHeight / CARD_HEIGHT);
+      const calculatedLimit = Math.max(MIN_LIMIT, rows * columns);
+      setLimit((currentLimit) =>
+        currentLimit === calculatedLimit ? currentLimit : calculatedLimit,
+      );
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteSpaces(limit);
+
+  useEffect(() => {
+    const target = observerTarget.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    observer.observe(target);
+    return () => observer.unobserve(target);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const spaces = useMemo(() => {
+    if (!data?.pages) return [];
+    const list: Space[] = [];
+    data.pages.forEach((page) => {
+      if (page.success && page.data?.spaces) {
+        list.push(...page.data.spaces);
+      }
+    });
+    return list;
+  }, [data]);
 
   if (isLoading) {
     return (
@@ -69,13 +123,15 @@ export function SpaceList() {
     );
   }
 
-  if (isError || !data?.success) {
+  if (isError || (data?.pages && !data.pages[0]?.success)) {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/5 p-8 text-center">
         <HugeiconsIcon icon={AlertCircleIcon} className="h-8 w-8 text-destructive mb-2" />
         <h3 className="text-sm font-semibold font-sora text-destructive">Failed to load spaces</h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          {data && !data.success ? data.message : 'Something went wrong while fetching spaces.'}
+          {data?.pages?.[0] && !data.pages[0].success
+            ? data.pages[0].message
+            : 'Something went wrong while fetching spaces.'}
         </p>
         <button
           onClick={() => refetch()}
@@ -86,8 +142,6 @@ export function SpaceList() {
       </div>
     );
   }
-
-  const spaces: Space[] = data.data.spaces || [];
 
   if (spaces.length === 0) {
     return (
@@ -158,6 +212,16 @@ export function SpaceList() {
           </Link>
         );
       })}
+
+      {/* Infinite Scroll Observer Target */}
+      <div
+        ref={observerTarget}
+        className="col-span-1 sm:col-span-2 lg:col-span-3 flex items-center justify-center py-4"
+      >
+        {isFetchingNextPage && (
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+        )}
+      </div>
     </div>
   );
 }

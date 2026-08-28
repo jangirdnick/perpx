@@ -113,7 +113,7 @@ export default function LayoutNav() {
 
         <div className="pointer-events-none absolute inset-y-0 right-1 z-10 flex items-center opacity-0 transition-opacity group-hover/chat-item:opacity-100">
           <div className="pointer-events-auto">
-            <ActionButton chatId={chat.id} />
+            <ActionButton chat={chat} />
           </div>
         </div>
       </div>
@@ -332,7 +332,7 @@ export default function LayoutNav() {
 
           {!isCollapsed && (
             <SidebarGroup className="flex-1 min-h-0 p-0">
-              <div className="flex flex-1 flex-col gap-0.5 overflow-y-scroll pr-0.5 scroll-smooth scrollbar-hide ">
+              <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto scrollbar-hide pr-0.5 scroll-smooth ">
                 {error?.message && (
                   <p className="px-2.5 text-[11px] text-destructive">{error.message}</p>
                 )}
@@ -361,12 +361,21 @@ export default function LayoutNav() {
                       </div>
                     )}
                     {earlierChats.length > 0 && (
-                      <div>
-                        <p className="mb-1.5 px-2.5 text-[10px] font-medium tracking-wider text-muted-foreground/70">
-                          Earlier
-                        </p>
-                        {earlierChats.map(renderChatItem)}
-                      </div>
+                      <>
+                        <div>
+                          <p className="mb-1.5 px-2.5 text-[10px] font-medium tracking-wider text-muted-foreground/70">
+                            Earlier
+                          </p>
+                          {earlierChats.map(renderChatItem)}
+                        </div>
+
+                        <Link
+                          href={'/history'}
+                          className="text-xs uppercase cursor-pointer w-full p-2 text-foreground/80 bg-secondary/30 hover:bg-secondary/50 hover:text-foreground rounded-md"
+                        >
+                          Show all ...
+                        </Link>
+                      </>
                     )}
                   </>
                 )}
@@ -375,7 +384,7 @@ export default function LayoutNav() {
           )}
         </SidebarContent>
 
-        <SidebarFooter className="border-t border-sidebar-border">
+        <SidebarFooter className="border-t border-sidebar-accent p-0">
           <UserNav isCollapsed={isCollapsed} />
         </SidebarFooter>
       </Sidebar>
