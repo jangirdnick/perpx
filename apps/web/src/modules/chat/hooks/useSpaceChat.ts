@@ -1,49 +1,44 @@
 import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useRef, useEffect, useCallback } from 'react';
 import {
-  deleteChat,
-  getChatHistory,
   getChatMessages,
-  getSidebarUserChats,
-  renameChat,
+  getSpaceChats,
+  getSpaceChatHistory,
+  updateSpaceChat as updateSpaceChatApi,
+  deleteSpaceChat as deleteSpaceChatApi,
 } from '../api/chat.api';
-import {
-  ChatDeleteResponse,
-  ChatUpdateTitleResponse,
-  Chat,
-  ChatListResponse,
-} from '@perpx/shared/types/chat.type';
-import { Message, MessageListResponse } from '@perpx/shared/types/message.type';
+import { ChatListResponse, Chat } from '@perpx/shared/types/chat.type';
+import { Message, MessageListResponse, SendMessagePayload } from '@perpx/shared/types/message.type';
 import { toast } from 'sonner';
 import { getErrorMessage } from '../../auth/api/auth.error.api';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import {
-  addMessage,
-  appendStreamingToken,
-  clearStreamingMessage,
-  deleteChat as deleteChatFromSlice,
-  setActiveChatId,
-  setChats,
-  setError,
-  setIsStreaming,
-  setMessages,
-  setStreamingMessage,
-  updateChatTitle,
-  updateHumanMessageId,
-} from '../slices/chatSlice';
+  addSpaceMessage,
+  appendSpaceStreamingToken,
+  clearSpaceStreamingMessage,
+  deleteSpaceChat as deleteSpaceChatFromSlice,
+  setSpaceActiveChatId,
+  setSpaceError,
+  setSpaceIsStreaming,
+  setSpaceMessages,
+  setSpaceChats,
+  updateSpaceChatTitle,
+  setSpaceStreamingMessage,
+  updateSpaceHumanMessageId,
+} from '../slices/spaceChatSlice';
 import { getSocket } from '../../../lib/socket';
-import { SendMessagePayload } from '@perpx/shared/types/message.type';
 import { useRouter } from 'next/navigation';
 
-export const useGetSidebarUserChats = () => {
+export const useGetSpaceChats = (spaceId: string) => {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
-  return useQuery({
-    queryKey: ['user-chats'],
+
+  const query = useQuery({
+    queryKey: ['space-chats', spaceId],
     queryFn: async () => {
-      const data = await getSidebarUserChats();
+      const data = await getSpaceChats(spaceId);
       if (data.success) {
-        const oldData = queryClient.getQueryData<ChatListResponse>(['user-chats']);
+        const oldData = queryClient.getQueryData<ChatListResponse>(['space-chats', spaceId]);
         if (oldData?.success && oldData.data?.chats) {
           const oldMap = new Map(oldData.data.chats.map((c: Chat) => [c.id, c.updatedAt]));
           data.data.chats = data.data.chats.map((c: Chat) => {
@@ -54,33 +49,57 @@ export const useGetSidebarUserChats = () => {
             return c;
           });
         }
-        dispatch(setChats(data.data.chats as Chat[]));
       }
       return data;
     },
+    enabled: !!spaceId,
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
   });
+
+  useEffect(() => {
+    if (query.data?.success && query.data?.data?.chats) {
+      dispatch(setSpaceChats(query.data.data.chats as Chat[]));
+    }
+  }, [query.data, dispatch]);
+
+  return query;
 };
 
-export const useChatHistory = (limit: number = 20) => {
-  return useInfiniteQuery({
-    queryKey: ['chat-history', limit],
-    queryFn: ({ pageParam }) => getChatHistory({ pageParam, limit }),
+export const useSpaceChatHistory = (spaceId: string, limit: number = 20) => {
+  const dispatch = useAppDispatch();
+  const query = useInfiniteQuery({
+    queryKey: ['space-chat-history', spaceId, limit],
+    queryFn: ({ pageParam }) => getSpaceChatHistory({ spaceId, pageParam, limit }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
       lastPage.success && lastPage.data?.nextCursor ? lastPage.data.nextCursor : undefined,
+    enabled: !!spaceId,
   });
+
+  useEffect(() => {
+    if (query.data?.pages) {
+      const allChats: Chat[] = [];
+      query.data.pages.forEach((page) => {
+        if (page.success && page.data?.chats) {
+          allChats.push(...page.data.chats);
+        }
+      });
+      dispatch(setSpaceChats(allChats));
+    }
+  }, [query.data, dispatch]);
+
+  return query;
 };
 
-export const useGetChatMessages = (chatId: string) => {
+export const useGetSpaceChatMessages = (chatId: string) => {
   const dispatch = useAppDispatch();
   return useQuery({
     queryKey: ['chat-messages', chatId],
     queryFn: async () => {
       const data = await getChatMessages(chatId);
       if (data.success) {
-        dispatch(setMessages(data.data.messages as Message[]));
+        dispatch(setSpaceMessages(data.data.messages as Message[]));
       }
       return data;
     },
@@ -90,28 +109,24 @@ export const useGetChatMessages = (chatId: string) => {
   });
 };
 
-export const useRenameChat = () => {
+export const useUpdateSpaceChat = (spaceId: string) => {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async ({ chatId, title }: { chatId: string; title: string }) =>
-      renameChat({ chatId, title }),
-    onSuccess: (data: ChatUpdateTitleResponse) => {
+      updateSpaceChatApi({ spaceId, chatId, title }),
+    onSuccess: (data) => {
       if (data.success && data.data?.chat) {
-        const updatedChat = data.data.chat;
         dispatch(
-          updateChatTitle({
-            id: updatedChat.id,
-            title: updatedChat.title,
-            updatedAt: updatedChat.updatedAt || new Date().toISOString(),
+          updateSpaceChatTitle({
+            id: data.data.chat.id,
+            title: data.data.chat.title,
+            updatedAt: data.data.chat.updatedAt || new Date().toISOString(),
           }),
         );
-        queryClient.invalidateQueries({ queryKey: ['user-chats'] });
-        toast.success(
-          updatedChat.title
-            ? `${updatedChat.title.slice(0, 16)} renamed`
-            : 'Chat renamed successfully.',
-        );
+        queryClient.invalidateQueries({ queryKey: ['space-chats', spaceId] });
+        toast.success(`Chat renamed to "${data.data.chat.title}"`);
       }
     },
     onError: (err: unknown) => {
@@ -120,16 +135,17 @@ export const useRenameChat = () => {
   });
 };
 
-export const useDeleteChat = () => {
+export const useDeleteSpaceChat = (spaceId: string) => {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async (chatId: string) => deleteChat(chatId),
-    onSuccess: (data: ChatDeleteResponse) => {
+    mutationFn: async (chatId: string) => deleteSpaceChatApi({ spaceId, chatId }),
+    onSuccess: (data, chatId) => {
       if (data.success) {
-        dispatch(deleteChatFromSlice(data.data.id));
-        queryClient.invalidateQueries({ queryKey: ['user-chats'] });
-        toast.success(`${data.message}` || 'Chat deleted successfull.');
+        dispatch(deleteSpaceChatFromSlice(chatId));
+        queryClient.invalidateQueries({ queryKey: ['space-chats', spaceId] });
+        toast.success(data.message || 'Chat deleted successfully.');
       }
     },
     onError: (err: unknown) => {
@@ -138,7 +154,7 @@ export const useDeleteChat = () => {
   });
 };
 
-export const useChat = () => {
+export const useSpaceChat = (spaceId: string) => {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -147,17 +163,13 @@ export const useChat = () => {
   const tempHumanMsgIdRef = useRef('');
   const streamingMessageRef = useRef('');
 
-  // TanStack Cache ko manually update
   const updateTanstackCache = useCallback(
     (chatId: string, newMessage: Message) => {
       queryClient.setQueryData<MessageListResponse | undefined>(
         ['chat-messages', chatId],
         (oldData) => {
           if (!oldData || !oldData.success || !oldData.data) return oldData;
-
-          // Check karte hain ki message pehle se cache me hai ya nahi (Duplicates rokne ke liye)
           const exists = oldData.data.messages.some((m: Message) => m.id === newMessage.id);
-
           if (exists) {
             return {
               ...oldData,
@@ -169,8 +181,6 @@ export const useChat = () => {
               },
             };
           }
-
-          // Agar nahi hai, toh array me naya message push kar do
           return {
             ...oldData,
             data: {
@@ -184,19 +194,26 @@ export const useChat = () => {
     [queryClient],
   );
 
-  const updateChatListTimestamp = useCallback(
-    (chatId: string, updatedAt: string) => {
-      queryClient.setQueryData(['user-chats'], (oldData: ChatListResponse) => {
+  const updateSpaceChatListTimestamp = useCallback(
+    (chatId: string, updatedAt: string, title?: string) => {
+      if (!spaceId) return;
+
+      if (title) {
+        dispatch(updateSpaceChatTitle({ id: chatId, title, updatedAt }));
+      }
+
+      queryClient.setQueryData(['space-chats', spaceId], (oldData: ChatListResponse) => {
         if (!oldData || !oldData.success || !oldData.data || !oldData.data.chats) return oldData;
         const chats = [...oldData.data.chats];
         const index = chats.findIndex((c: Chat) => c.id === chatId);
         if (index !== -1) {
           chats[index] = { ...chats[index], updatedAt };
+          if (title) chats[index].title = title;
         }
         return { ...oldData, data: { ...oldData.data, chats } };
       });
     },
-    [queryClient],
+    [queryClient, spaceId, dispatch],
   );
 
   useEffect(() => {
@@ -207,14 +224,14 @@ export const useChat = () => {
     }
 
     const onStreamMessage = ({ token, chatId }: { token: string; chatId: string }) => {
-      dispatch(setActiveChatId(chatId));
-      dispatch(appendStreamingToken(token));
+      dispatch(setSpaceActiveChatId(chatId));
+      dispatch(appendSpaceStreamingToken(token));
       streamingMessageRef.current += token;
     };
 
     const onStreamEnd = ({ message }: { message: Message }) => {
       dispatch(
-        addMessage({
+        addSpaceMessage({
           id: message.id,
           role: message.role,
           message: message.message,
@@ -224,56 +241,46 @@ export const useChat = () => {
         }),
       );
 
-      // UPDATE CACHE: AI ka message bhi cache me daal diya
       updateTanstackCache(message.chatId, message);
-      updateChatListTimestamp(message.chatId, message.createdAt);
+      updateSpaceChatListTimestamp(message.chatId, message.createdAt);
 
-      dispatch(clearStreamingMessage());
-      dispatch(setIsStreaming(false));
+      dispatch(clearSpaceStreamingMessage());
+      dispatch(setSpaceIsStreaming(false));
       streamingMessageRef.current = '';
 
       const currentUrl = new URL(window.location.href);
       if (currentUrl.searchParams.get('chatId') !== message.chatId) {
-        router.push(`/?chatId=${message.chatId}`);
+        router.push(`${currentUrl.pathname}?chatId=${message.chatId}`);
       }
 
-      queryClient.invalidateQueries({ queryKey: ['user-chats'] });
+      if (spaceId) {
+        queryClient.invalidateQueries({ queryKey: ['space-chats', spaceId] });
+      }
     };
 
     const onTitleGenerated = ({ title, chatId }: { title: string; chatId: string }) => {
       const newUpdatedAt = new Date().toISOString();
-      dispatch(updateChatTitle({ id: chatId, title, updatedAt: newUpdatedAt }));
-
-      queryClient.setQueryData(['user-chats'], (oldData: ChatListResponse) => {
-        if (!oldData || !oldData.success || !oldData.data || !oldData.data.chats) return oldData;
-        const chats = [...oldData.data.chats];
-        const index = chats.findIndex((c: Chat) => c.id === chatId);
-        if (index !== -1) {
-          chats[index] = { ...chats[index], title, updatedAt: newUpdatedAt };
-        }
-        return { ...oldData, data: { ...oldData.data, chats } };
-      });
+      updateSpaceChatListTimestamp(chatId, newUpdatedAt, title);
     };
 
     const onHumanMessage = ({ humanMessage }: { humanMessage: Message }) => {
-      dispatch(setActiveChatId(humanMessage.chatId));
+      dispatch(setSpaceActiveChatId(humanMessage.chatId));
 
       dispatch(
-        updateHumanMessageId({
+        updateSpaceHumanMessageId({
           tempId: tempHumanMsgIdRef.current,
           realMessage: humanMessage,
         }),
       );
 
-      // UPDATE CACHE: User ka final message bhi cache me daal diya
       updateTanstackCache(humanMessage.chatId, humanMessage);
-      updateChatListTimestamp(humanMessage.chatId, humanMessage.createdAt);
+      updateSpaceChatListTimestamp(humanMessage.chatId, humanMessage.createdAt);
     };
 
     const onStreamError = ({ message }: { message: string }) => {
       toast.error(message);
-      dispatch(setError(message));
-      dispatch(setIsStreaming(false));
+      dispatch(setSpaceError(message));
+      dispatch(setSpaceIsStreaming(false));
     };
 
     socket.on('streamMessage', onStreamMessage);
@@ -289,15 +296,23 @@ export const useChat = () => {
       socket.off('streamEnd', onStreamEnd);
       socket.off('streamError', onStreamError);
     };
-  }, [access_token, dispatch, queryClient, router, updateTanstackCache, updateChatListTimestamp]);
+  }, [
+    access_token,
+    dispatch,
+    queryClient,
+    router,
+    spaceId,
+    updateTanstackCache,
+    updateSpaceChatListTimestamp,
+  ]);
 
   const sendMessage = useCallback(
     (payload: SendMessagePayload) => {
       const socket = getSocket(access_token);
       if (!socket.connected) socket.connect();
 
-      dispatch(setIsStreaming(true));
-      dispatch(setStreamingMessage(''));
+      dispatch(setSpaceIsStreaming(true));
+      dispatch(setSpaceStreamingMessage(''));
       streamingMessageRef.current = '';
 
       const tempId = 'user-msg-' + Date.now();
@@ -306,7 +321,7 @@ export const useChat = () => {
       const targetChatId = payload.chatId || 'temp-chat';
 
       if (!payload.chatId) {
-        dispatch(setActiveChatId(targetChatId));
+        dispatch(setSpaceActiveChatId(targetChatId));
       }
 
       let sources: { url: string; title: string; snippet: string }[] = [];
@@ -322,7 +337,7 @@ export const useChat = () => {
 
       if (payload.message) {
         dispatch(
-          addMessage({
+          addSpaceMessage({
             id: tempId,
             role: 'HUMAN',
             message: payload.message,
@@ -332,12 +347,12 @@ export const useChat = () => {
             sources,
           }),
         );
-        updateChatListTimestamp(targetChatId, new Date().toISOString());
+        updateSpaceChatListTimestamp(targetChatId, new Date().toISOString());
       }
 
       socket.emit('sendMessage', payload);
     },
-    [access_token, dispatch, updateChatListTimestamp],
+    [access_token, dispatch, updateSpaceChatListTimestamp],
   );
 
   return { sendMessage };

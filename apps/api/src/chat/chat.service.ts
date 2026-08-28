@@ -9,19 +9,51 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ChatService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createChat(userId: string) {
+  async createChat(userId: string, spaceId?: string) {
+    if (spaceId) {
+      const space = await this.prisma.space.findUnique({
+        where: { id: spaceId },
+        include: { spaceMembers: true },
+      });
+      if (!space) {
+        throw new NotFoundException('Space not found');
+      }
+      const isMember = space.spaceMembers.some((m) => m.userId === userId);
+      if (!isMember) {
+        throw new ForbiddenException(
+          'You must be a member of the space to create a chat in it',
+        );
+      }
+    }
+
     const chat = await this.prisma.chat.create({
       data: {
         userId,
         title: 'New Chat',
+        spaceId: spaceId || null,
       },
       select: {
         id: true,
         title: true,
         description: true,
         userId: true,
+        spaceId: true,
         createdAt: true,
         updatedAt: true,
+        space: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            type: true,
+            createdAt: true,
+            updatedAt: true,
+            spaceMembers: {
+              where: { userId },
+              select: { id: true, role: true, userId: true },
+            },
+          },
+        },
       },
     });
 
@@ -42,8 +74,23 @@ export class ChatService {
         title: true,
         description: true,
         userId: true,
+        spaceId: true,
         createdAt: true,
         updatedAt: true,
+        space: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            type: true,
+            createdAt: true,
+            updatedAt: true,
+            spaceMembers: {
+              where: { userId },
+              select: { id: true, role: true, userId: true },
+            },
+          },
+        },
       },
     });
 
@@ -51,7 +98,16 @@ export class ChatService {
       throw new NotFoundException('Chat not found');
     }
 
-    if (userId && chat.userId !== userId) {
+    if (chat.spaceId && chat.space) {
+      if (
+        chat.space.type !== 'PUBLIC' &&
+        chat.space.spaceMembers.length === 0
+      ) {
+        throw new ForbiddenException(
+          'You do not have access to this space chat',
+        );
+      }
+    } else if (userId && chat.userId !== userId) {
       throw new ForbiddenException('You do not have access to this chat');
     }
 
@@ -66,7 +122,9 @@ export class ChatService {
 
   async updateTitle(chatId: string, title: string, userId?: string) {
     if (userId) {
-      const chat = await this.findById(chatId, userId);
+      const chat = await this.prisma.chat.findFirst({
+        where: { id: chatId, userId, spaceId: null },
+      });
       if (!chat) {
         throw new NotFoundException('Chat not found');
       }
@@ -105,7 +163,7 @@ export class ChatService {
 
   async getSidebarUserChats(userId: string) {
     const chat = await this.prisma.chat.findMany({
-      where: { userId },
+      where: { userId, spaceId: null },
       select: {
         id: true,
         title: true,
@@ -129,9 +187,151 @@ export class ChatService {
     };
   }
 
+  async getHistoryChats(userId: string, cursor?: string, limit: number = 20) {
+    const chats = await this.prisma.chat.findMany({
+      where: { userId, spaceId: null },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        userId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      take: limit + 1,
+      skip: cursor ? 1 : 0,
+      cursor: cursor ? { id: cursor } : undefined,
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+
+    let nextCursor: string | null = null;
+    if (chats.length > limit) {
+      chats.pop();
+      nextCursor = chats[chats.length - 1].id;
+    }
+
+    return {
+      success: true,
+      data: {
+        chats,
+        nextCursor,
+      },
+      message: 'History chats retrieved successfully',
+    };
+  }
+
+  async getSpaceChats(spaceId: string, userId: string) {
+    const space = await this.prisma.space.findUnique({
+      where: { id: spaceId },
+      include: {
+        spaceMembers: {
+          where: { userId },
+        },
+      },
+    });
+
+    if (!space) {
+      throw new NotFoundException('Space not found');
+    }
+
+    if (space.type !== 'PUBLIC' && space.spaceMembers.length === 0) {
+      throw new ForbiddenException('You do not have access to this space');
+    }
+
+    const chats = await this.prisma.chat.findMany({
+      where: { spaceId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        userId: true,
+        spaceId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return {
+      success: true,
+      data: {
+        chats,
+      },
+      message: 'Space chats retrieved successfully',
+    };
+  }
+
+  async getSpaceChatsInfinite(
+    spaceId: string,
+    userId: string,
+    cursor?: string,
+    limit: number = 20,
+  ) {
+    const space = await this.prisma.space.findUnique({
+      where: { id: spaceId },
+      include: {
+        spaceMembers: {
+          where: { userId },
+        },
+      },
+    });
+
+    if (!space) {
+      throw new NotFoundException('Space not found');
+    }
+
+    if (space.type !== 'PUBLIC' && space.spaceMembers.length === 0) {
+      throw new ForbiddenException('You do not have access to this space');
+    }
+
+    const chats = await this.prisma.chat.findMany({
+      where: { spaceId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        userId: true,
+        spaceId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      take: limit + 1,
+      skip: cursor ? 1 : 0,
+      cursor: cursor ? { id: cursor } : undefined,
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+
+    let nextCursor: string | null = null;
+    if (chats.length > limit) {
+      chats.pop();
+      nextCursor = chats[chats.length - 1].id;
+    }
+
+    return {
+      success: true,
+      data: {
+        chats,
+        nextCursor,
+      },
+      message: 'Space chats retrieved successfully',
+    };
+  }
+
   async deleteChat(chatId: string, userId: string) {
-    const chat = await this.prisma.chat.delete({
-      where: { id: chatId, userId },
+    const chat = await this.prisma.chat.findFirst({
+      where: { id: chatId, userId, spaceId: null },
+    });
+
+    if (!chat) {
+      throw new NotFoundException('Chat not found');
+    }
+
+    const deletedChat = await this.prisma.chat.delete({
+      where: { id: chatId },
       select: {
         id: true,
         title: true,
@@ -141,9 +341,109 @@ export class ChatService {
     return {
       success: true,
       data: {
-        chat,
+        chat: deletedChat,
       },
-      message: `${chat.title} deleted successfully`,
+      message: `${deletedChat.title} deleted successfully`,
+    };
+  }
+
+  async updateSpaceChat(
+    spaceId: string,
+    chatId: string,
+    userId: string,
+    title: string,
+  ) {
+    const space = await this.prisma.space.findUnique({
+      where: { id: spaceId },
+      include: {
+        spaceMembers: {
+          where: { userId },
+        },
+      },
+    });
+
+    if (!space) {
+      throw new NotFoundException('Space not found');
+    }
+
+    if (space.type !== 'PUBLIC' && space.spaceMembers.length === 0) {
+      throw new ForbiddenException('You do not have access to this space');
+    }
+
+    const chat = await this.prisma.chat.findFirst({
+      where: { id: chatId, spaceId },
+    });
+
+    if (!chat) {
+      throw new NotFoundException('Space chat not found');
+    }
+
+    const updatedChat = await this.prisma.chat.update({
+      where: { id: chatId },
+      data: { title, updatedAt: new Date() },
+      select: {
+        id: true,
+        title: true,
+        spaceId: true,
+        updatedAt: true,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        chat: updatedChat,
+      },
+      message: `${updatedChat.title} updated successfully`,
+    };
+  }
+
+  async deleteSpaceChat(spaceId: string, chatId: string, userId: string) {
+    const space = await this.prisma.space.findUnique({
+      where: { id: spaceId },
+      include: {
+        spaceMembers: {
+          where: { userId },
+        },
+      },
+    });
+
+    if (!space) {
+      throw new NotFoundException('Space not found');
+    }
+
+    const chat = await this.prisma.chat.findFirst({
+      where: { id: chatId, spaceId },
+    });
+
+    if (!chat) {
+      throw new NotFoundException('Space chat not found');
+    }
+
+    const userMember = space.spaceMembers[0];
+    const isCreator = chat.userId === userId;
+    const isAdmin = userMember?.role === 'ADMIN';
+
+    if (!isCreator && !isAdmin) {
+      throw new ForbiddenException(
+        'Only the chat creator or space admin can delete this space chat',
+      );
+    }
+
+    const deletedChat = await this.prisma.chat.delete({
+      where: { id: chatId },
+      select: {
+        id: true,
+        title: true,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        chat: deletedChat,
+      },
+      message: `${deletedChat.title} deleted successfully`,
     };
   }
 }

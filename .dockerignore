@@ -72,4 +72,5 @@ yarn.lock
 tmp/
 temp/
 
+assets-dev/
 memory/

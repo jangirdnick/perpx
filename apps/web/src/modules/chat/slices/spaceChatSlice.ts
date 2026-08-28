@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Chat, UpdateTitleData } from '@perpx/shared/types/chat.type';
 import { Message } from '@perpx/shared/types/message.type';
 
-interface ChatState {
+interface SpaceChatState {
   chats: Chat[];
   activeChatId: string | null;
   activeChat: Chat | null;
@@ -12,7 +12,7 @@ interface ChatState {
   error: string | null;
 }
 
-const initialState: ChatState = {
+const initialState: SpaceChatState = {
   chats: [],
   activeChatId: null,
   activeChat: null,
@@ -22,19 +22,19 @@ const initialState: ChatState = {
   error: null,
 };
 
-const chatSlice = createSlice({
-  name: 'chat',
+const spaceChatSlice = createSlice({
+  name: 'spaceChat',
   initialState,
   reducers: {
-    setChats: (state, action: PayloadAction<Chat[] | []>) => {
+    setSpaceChats: (state, action: PayloadAction<Chat[] | []>) => {
       state.chats = action.payload;
     },
 
-    addChat: (state, action: PayloadAction<Chat>) => {
+    addSpaceChat: (state, action: PayloadAction<Chat>) => {
       state.chats.unshift(action.payload);
     },
 
-    deleteChat: (state, action: PayloadAction<string>) => {
+    deleteSpaceChat: (state, action: PayloadAction<string>) => {
       state.chats = state.chats.filter((chat) => chat.id !== action.payload);
 
       if (state.activeChat?.id === action.payload) {
@@ -43,27 +43,27 @@ const chatSlice = createSlice({
       }
     },
 
-    setActiveChatId: (state, action: PayloadAction<string | null>) => {
+    setSpaceActiveChatId: (state, action: PayloadAction<string | null>) => {
       state.activeChatId = action.payload;
     },
 
-    removeActiveChatId: (state) => {
+    removeSpaceActiveChatId: (state) => {
       state.activeChatId = null;
     },
 
-    setActiveChat: (state, action: PayloadAction<Chat | null>) => {
+    setSpaceActiveChat: (state, action: PayloadAction<Chat | null>) => {
       state.activeChat = action.payload;
     },
 
-    setMessages: (state, action: PayloadAction<Message[]>) => {
+    setSpaceMessages: (state, action: PayloadAction<Message[]>) => {
       state.messages = action.payload;
     },
 
-    appendStreamingToken: (state, action: PayloadAction<string>) => {
+    appendSpaceStreamingToken: (state, action: PayloadAction<string>) => {
       state.streamingMessage += action.payload;
     },
 
-    addMessage: (state, action: PayloadAction<Message>) => {
+    addSpaceMessage: (state, action: PayloadAction<Message>) => {
       const existingMsgIndex = state.messages.findIndex((m) => m.id === action.payload.id);
 
       if (existingMsgIndex !== -1) {
@@ -74,23 +74,33 @@ const chatSlice = createSlice({
       }
     },
 
-    setIsStreaming: (state, action: PayloadAction<boolean>) => {
+    setSpaceIsStreaming: (state, action: PayloadAction<boolean>) => {
       state.isStreaming = action.payload;
     },
 
-    setStreamingMessage: (state, action: PayloadAction<string>) => {
+    setSpaceStreamingMessage: (state, action: PayloadAction<string>) => {
       state.streamingMessage = action.payload;
     },
 
-    clearStreamingMessage: (state) => {
+    clearSpaceStreamingMessage: (state) => {
       state.streamingMessage = '';
     },
 
-    setError: (state, action: PayloadAction<string | null>) => {
+    setSpaceError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
 
-    updateChatTitle: (state, action: PayloadAction<UpdateTitleData>) => {
+    updateSpaceHumanMessageId: (
+      state,
+      action: PayloadAction<{ tempId: string; realMessage: Message }>,
+    ) => {
+      const msgIndex = state.messages.findIndex((m) => m.id === action.payload.tempId);
+      if (msgIndex !== -1) {
+        state.messages[msgIndex] = action.payload.realMessage;
+      }
+    },
+
+    updateSpaceChatTitle: (state, action: PayloadAction<UpdateTitleData>) => {
       if (!action.payload?.id) return;
       const chatIndex = state.chats.findIndex((chat) => chat && chat.id == action.payload.id);
 
@@ -105,18 +115,8 @@ const chatSlice = createSlice({
       }
     },
 
-    updateHumanMessageId: (
-      state,
-      action: PayloadAction<{ tempId: string; realMessage: Message }>,
-    ) => {
-      const msgIndex = state.messages.findIndex((m) => m.id === action.payload.tempId);
-      if (msgIndex !== -1) {
-        // Temp message ko real message data se replace kar do
-        state.messages[msgIndex] = action.payload.realMessage;
-      }
-    },
-
-    resetChatState: (state) => {
+    resetSpaceChatState: (state) => {
+      state.activeChatId = null;
       state.activeChat = null;
       state.messages = [];
       state.isStreaming = false;
@@ -127,22 +127,22 @@ const chatSlice = createSlice({
 });
 
 export const {
-  setChats,
-  addChat,
-  deleteChat,
-  setActiveChatId,
-  removeActiveChatId,
-  setActiveChat,
-  setMessages,
-  addMessage,
-  setIsStreaming,
-  setStreamingMessage,
-  clearStreamingMessage,
-  appendStreamingToken,
-  setError,
-  updateChatTitle,
-  updateHumanMessageId,
-  resetChatState,
-} = chatSlice.actions;
+  setSpaceChats,
+  addSpaceChat,
+  deleteSpaceChat,
+  setSpaceActiveChatId,
+  removeSpaceActiveChatId,
+  setSpaceActiveChat,
+  setSpaceMessages,
+  addSpaceMessage,
+  setSpaceIsStreaming,
+  setSpaceStreamingMessage,
+  clearSpaceStreamingMessage,
+  appendSpaceStreamingToken,
+  setSpaceError,
+  updateSpaceHumanMessageId,
+  updateSpaceChatTitle,
+  resetSpaceChatState,
+} = spaceChatSlice.actions;
 
-export default chatSlice.reducer;
+export default spaceChatSlice.reducer;

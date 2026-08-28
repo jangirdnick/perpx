@@ -3,23 +3,24 @@ import { useSearchParams } from 'next/navigation';
 import imageCompression from 'browser-image-compression';
 import { toast } from 'sonner';
 import { useAppSelector } from '../../../store/hooks';
-import { useChat } from '../../chat/hooks/useChat';
+import { useSpaceChat } from '../../chat/hooks/useSpaceChat';
 import { useGetUploadURL, useUploadFile } from './useLayout';
 import { MAX_ROWS, MIN_ROWS, LINE_HEIGHT } from '../types/index';
 import type { UploadedFile } from '../types/index';
 import { getErrorMessage } from '../../auth/api/auth.error.api';
 
-export function useHomeComposer() {
+export function useSpaceComposer(spaceId: string) {
   const [query, setQuery] = useState('');
   const [webSearch, setWebSearch] = useState(false);
   const [files, setFiles] = useState<UploadedFile[]>([]);
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const { sendMessage } = useChat();
-  const { activeChatId, isStreaming } = useAppSelector((state) => state.chat);
+  const { sendMessage } = useSpaceChat(spaceId);
+  const { activeChatId, isStreaming } = useAppSelector((state) => state.spaceChat);
   const getUploadURLMutation = useGetUploadURL();
   const uploadFileMutation = useUploadFile();
+  const searchParams = useSearchParams();
 
   const hasMessage = useMemo(() => query.trim().length > 0 || files.length > 0, [query, files]);
 
@@ -44,6 +45,7 @@ export function useHomeComposer() {
 
     sendMessage({
       chatId: activeChatId || undefined,
+      spaceId: spaceId || undefined,
       message: query,
       webSearch,
       attachments: files,
@@ -55,7 +57,7 @@ export function useHomeComposer() {
     if (textareaRef.current) {
       textareaRef.current.style.height = `${MIN_ROWS * LINE_HEIGHT}px`;
     }
-  }, [activeChatId, files, hasMessage, isStreaming, query, sendMessage, webSearch]);
+  }, [activeChatId, spaceId, files, hasMessage, isStreaming, query, sendMessage, webSearch]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

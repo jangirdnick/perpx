@@ -39,3 +39,4 @@ export type Space = {
 
 export type SpaceResponse = ApiSuccessResponse<{ space: Space }> | ApiErrorResponse;
 export type SpaceListResponse = ApiSuccessResponse<{ spaces: Space[] }> | ApiErrorResponse;
+export type SpaceInfiniteResponse = ApiSuccessResponse<{ spaces: Space[]; nextCursor: string | null }> | ApiErrorResponse;

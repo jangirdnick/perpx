@@ -64,13 +64,8 @@ export function CreateSpaceModal() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="flex items-center gap-1 rounded-lg px-2 py-4">
-          <HugeiconsIcon
-            className="text-2xl w-4! h-4!"
-            icon={PlusSignIcon}
-            size={16}
-            strokeWidth={2}
-          />
-          <span className="font-sora text-xs md:text-sm">New Space</span>
+          <HugeiconsIcon className="w-3! h-3!" icon={PlusSignIcon} size={16} strokeWidth={2} />
+          <span className="font-sora text-xs">New Space</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md rounded-2xl border-border bg-card/95 backdrop-blur-md">

@@ -87,11 +87,17 @@ export class ApiService {
     pdfContext: string,
     onToken: (token: string) => void,
     onEnd: (full: string) => void,
+    spaceContext?: string,
   ): Promise<void> {
     try {
       const llm = this.getModel('gemini');
+      let systemPrompt = this.NORMAL_SYSTEM_PROMPT;
+      if (spaceContext) {
+        systemPrompt += `\n\nSpace Context:\nYou are currently in a Workspace/Space with the following context: "${spaceContext}". Keep this context in mind when answering.`;
+      }
+
       const formatMessages = await buildMessages(
-        this.NORMAL_SYSTEM_PROMPT,
+        systemPrompt,
         messages,
         pdfContext,
         this.logger,
@@ -122,6 +128,7 @@ export class ApiService {
     pdfContext: string,
     onToken: (token: string) => void,
     onEnd: (full: string, sources: WebSource[]) => void,
+    spaceContext?: string,
   ): Promise<void> {
     try {
       if (!webSearch) {
@@ -130,6 +137,7 @@ export class ApiService {
           pdfContext,
           onToken,
           (full) => onEnd(full, []),
+          spaceContext,
         );
       }
 
@@ -150,8 +158,13 @@ export class ApiService {
       const sources = parseTavilyResults(rawResults);
       const webContext = buildWebContext(sources);
 
+      let systemPrompt = `${this.WEB_SEARCH_SYSTEM_PROMPT}\n\nWeb search results:\n${webContext}`;
+      if (spaceContext) {
+        systemPrompt += `\n\nSpace Context:\nYou are currently in a Workspace/Space with the following context: "${spaceContext}". Keep this context in mind when answering.`;
+      }
+
       const formatMessages = await buildMessages(
-        `${this.WEB_SEARCH_SYSTEM_PROMPT}\n\nWeb search results:\n${webContext}`,
+        systemPrompt,
         messages,
         pdfContext,
         this.logger,

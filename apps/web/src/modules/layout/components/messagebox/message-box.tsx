@@ -7,7 +7,8 @@ import { Message } from '@perpx/shared/types/message.type';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
-import { useGetChatMessages } from '../../../chat/hooks/useChat';
+import { useQuery } from '@tanstack/react-query';
+import { getChatMessages } from '../../../chat/api/chat.api';
 
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
@@ -25,6 +26,7 @@ import {
 import { Button } from '../../../../components/ui/button';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import { setMessages } from '../../../chat/slices/chatSlice';
+import { setSpaceMessages } from '../../../chat/slices/spaceChatSlice';
 import { MessagesSkeleton } from './messages-skeleton';
 import MarkdownMessage from './message-markdown';
 import Link from 'next/link';
@@ -288,16 +290,35 @@ const MessageItem = memo(function MessageItem({ message }: MessageItemProps) {
   );
 });
 
-export default function MessageBox({ chatId }: { chatId: string }) {
+export default function MessageBox({
+  chatId,
+  isSpaceChat = false,
+}: {
+  chatId: string;
+  isSpaceChat?: boolean;
+}) {
   const dispatch = useAppDispatch();
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
 
-  const { data, isPending, error } = useGetChatMessages(chatId);
-  const { messages, streamingMessage, isStreaming } = useAppSelector((state) => state.chat);
+  const { data, isPending, error } = useQuery({
+    queryKey: ['chat-messages', chatId],
+    queryFn: async () => await getChatMessages(chatId),
+    enabled: !!chatId && chatId !== 'temp-chat',
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const chatState = useAppSelector((state) => state.chat);
+  const spaceChatState = useAppSelector((state) => state.spaceChat);
+  const { messages, streamingMessage, isStreaming } = isSpaceChat ? spaceChatState : chatState;
 
   useEffect(() => {
     if (data?.success && chatId && !isStreaming) {
-      dispatch(setMessages(data.data.messages as Message[]));
+      if (isSpaceChat) {
+        dispatch(setSpaceMessages(data.data.messages as Message[]));
+      } else {
+        dispatch(setMessages(data.data.messages as Message[]));
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, chatId, dispatch]);

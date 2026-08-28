@@ -65,7 +65,7 @@ model Chat {
   spaceId         String?
 
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  spaces          Space?        @relation(fields: [spaceId], references: [id])
+  space           Space?        @relation(fields: [spaceId], references: [id])
   messages        Message[]
 
   createdAt       DateTime      @default(now())
