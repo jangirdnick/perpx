@@ -40,7 +40,7 @@ export default function LayoutNav() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { state, toggleSidebar } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
   const { data, isLoading, error } = useGetSidebarUserChats();
@@ -80,8 +80,8 @@ export default function LayoutNav() {
 
   const handleGetChatMessages = (chatId: string) => {
     dispatch(setActiveChatId(chatId));
-    if (window.innerWidth < 768) {
-      toggleSidebar();
+    if (isMobile) {
+      setOpenMobile(false);
     }
     router.push(`/?chatId=${chatId}`);
   };
@@ -89,6 +89,9 @@ export default function LayoutNav() {
   const handleResetChatId = () => {
     if (activeChatId) {
       dispatch(removeActiveChatId());
+    }
+    if (isMobile) {
+      setOpenMobile(false);
     }
   };
 
