@@ -33,6 +33,7 @@ export type DeleteMessage = {
 export type SendMessagePayload = {
   message: string;
   chatId?: string;
+  spaceId?: string;
   webSearch: boolean;
   attachments?: Attachment[];
 };

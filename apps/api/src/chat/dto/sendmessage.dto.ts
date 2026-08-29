@@ -28,6 +28,10 @@ export class SendMessageDto {
   chatId?: string;
 
   @IsOptional()
+  @IsString()
+  spaceId?: string;
+
+  @IsOptional()
   @IsBoolean()
   webSearch?: boolean;
 

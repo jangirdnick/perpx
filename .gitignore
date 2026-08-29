@@ -75,3 +75,7 @@ temp/
 
 # Docker
 docker-compose.override.yml
+
+
+assets-dev/
+memory/

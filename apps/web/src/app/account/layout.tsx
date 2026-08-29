@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import GuestProvider from '../../lib/providers/guest.provider';
 
 interface AccountLayoutProps {
@@ -11,7 +10,7 @@ interface AccountLayoutProps {
 export default function AccountLayout({ children, sendnewemail }: AccountLayoutProps) {
   return (
     <GuestProvider>
-      <main className="relative dark:bg-black">
+      <main className="relative">
         {children}
         {sendnewemail}
       </main>

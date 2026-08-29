@@ -91,14 +91,15 @@ const chatSlice = createSlice({
     },
 
     updateChatTitle: (state, action: PayloadAction<UpdateTitleData>) => {
-      const chatIndex = state.chats.findIndex((chat) => chat.id == action.payload.id);
+      if (!action.payload?.id) return;
+      const chatIndex = state.chats.findIndex((chat) => chat && chat.id == action.payload.id);
 
-      if (chatIndex !== -1) {
+      if (chatIndex !== -1 && state.chats[chatIndex]) {
         state.chats[chatIndex].title = action.payload.title;
         state.chats[chatIndex].updatedAt = action.payload.updatedAt;
       }
 
-      if (state.activeChat?.id === action.payload.id) {
+      if (state.activeChat && state.activeChat.id === action.payload.id) {
         state.activeChat.title = action.payload.title;
         state.activeChat.updatedAt = action.payload.updatedAt;
       }

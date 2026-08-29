@@ -12,6 +12,11 @@ import type {
 
 import type { ApiErrorResponse } from './types/api.type';
 
+export * from './types/chat.type';
+export * from './types/message.type';
+export * from './types/s3upload.type';
+export * from './types/space.type';
+
 export const test = 'hello from shared';
 export type { User };
 export type {

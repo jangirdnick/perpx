@@ -37,7 +37,7 @@ ARG NEXT_PUBLIC_BACKEND_API_URL
 ENV NEXT_PUBLIC_BACKEND_API_URL=${NEXT_PUBLIC_BACKEND_API_URL}
 
 # RUN pnpm --filter=web build
-RUN pnpm --filter=web build --turbo
+RUN pnpm --filter=web build
 
 # ---------- Runner (minimal) ----------
 FROM node:22-alpine AS runner
