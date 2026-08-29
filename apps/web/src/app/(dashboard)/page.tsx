@@ -8,7 +8,7 @@ import { ChatComposer } from '../../modules/layout/components/home/chat-composer
 import { useHomeComposer } from '../../modules/layout/hooks/useHomeComposer';
 import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { setActiveChatId } from '../../modules/chat/slices/chatSlice';
+import { setActiveChatId, removeActiveChatId } from '../../modules/chat/slices/chatSlice';
 
 export default function Home() {
   const { activeChatId } = useAppSelector((state) => state.chat);
@@ -22,6 +22,8 @@ export default function Home() {
 
     if (chatId) {
       dispatch(setActiveChatId(chatId));
+    } else {
+      dispatch(removeActiveChatId());
     }
   }, [searchParams, dispatch]);
 
@@ -48,7 +50,7 @@ export default function Home() {
           <>
             <HomeHero />
             <div className="w-full">
-              <ChatComposer {...composer} />
+              <ChatComposer {...composer} isHero={true} />
             </div>
             <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground/50">
               <span>Shift + Enter for new line</span>

@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector } from '@/store/hooks';
+import { SessionLoader } from '@/components/shared/session-loader';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -20,7 +21,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }, [loading, isAuthenticated, router]);
 
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center">Checking session...</div>;
+    return <SessionLoader message="Authenticating session..." />;
   }
 
   if (!isAuthenticated || !user) {
