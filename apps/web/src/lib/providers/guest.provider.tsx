@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAppSelector } from '@/store/hooks';
+import { SessionLoader } from '@/components/shared/session-loader';
 
 interface GuestProviderProps {
   children: React.ReactNode;
@@ -26,7 +27,7 @@ export default function GuestProvider({ children, redirectTo = '/' }: GuestProvi
 
   // Bootstrap chal raha hai to wait karo
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center">Checking session...</div>;
+    return <SessionLoader message="Checking session..." />;
   }
 
   // User already logged in hai to kuch mat dikhao

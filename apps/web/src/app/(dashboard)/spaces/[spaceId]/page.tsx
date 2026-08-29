@@ -337,7 +337,7 @@ export default function SpaceDetailsPage({ params }: SpaceDetailsPageProps) {
                 </p>
               </div>
               <div className="w-full shrink-0">
-                <ChatComposer {...composer} />
+                <ChatComposer {...composer} isHero={true} />
               </div>
               <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground/50 shrink-0">
                 <span>Shift + Enter for new line</span>
