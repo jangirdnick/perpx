@@ -4,9 +4,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
@@ -27,6 +24,8 @@ import { useAppSelector } from '../../../../store/hooks';
 import { Button } from '../../../../components/ui/button';
 import { useLogout } from '../../../auth/hooks/useAuth';
 
+import { cn } from '@/lib/utils';
+
 interface UserNavProps {
   isCollapsed: boolean;
 }
@@ -35,7 +34,7 @@ const menuIconClass = 'size-4 text-muted-foreground';
 const menuItemClass = 'cursor-pointer rounded-lg py-2.5 transition-colors';
 
 export default function UserNav({ isCollapsed }: UserNavProps) {
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   const { user } = useAppSelector((state) => state.auth);
   const { mutate, isPending } = useLogout();
@@ -58,8 +57,6 @@ export default function UserNav({ isCollapsed }: UserNavProps) {
             transition-all duration-200
             bg-transparent
             hover:bg-accent/40
-            // focus:outline-none
-            // focus:ring-2 focus:ring-ring
           `}
         >
           {/* Avatar */}
@@ -83,8 +80,8 @@ export default function UserNav({ isCollapsed }: UserNavProps) {
 
       <DropdownMenuContent
         align="end"
-        sideOffset={15}
-        className="w-80 rounded-2xl border bg-sidebar/95 backdrop-blur-md p-2 ml-1 z-9999"
+        sideOffset={12}
+        className="w-80 max-w-[calc(100vw-1.5rem)] rounded-2xl border bg-sidebar/95 backdrop-blur-md p-2 z-50"
       >
         {/* User Card */}
         <div className="flex items-center gap-3 rounded-xl p-3">
@@ -115,25 +112,25 @@ export default function UserNav({ isCollapsed }: UserNavProps) {
         {/* Upgrade */}
         <DropdownMenuItem
           className="
-            cursor-pointer rounded-xl p-4
+            cursor-pointer rounded-xl p-3.5
             focus:bg-accent
           "
         >
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
               <div
                 className="
-                  flex size-8 items-center justify-center
+                  flex size-7 items-center justify-center
                   rounded-full bg-primary/10
                 "
               >
-                <HugeiconsIcon icon={UploadCircle01Icon} className="size-4" />
+                <HugeiconsIcon icon={UploadCircle01Icon} className="size-3.5" />
               </div>
 
               <span className="text-sm font-semibold">Upgrade Plan</span>
             </div>
 
-            <p className="pl-10 text-xs leading-relaxed text-muted-foreground">
+            <p className="pl-9 text-xs leading-relaxed text-muted-foreground">
               Unlock premium features and unlimited workspace access.
             </p>
           </div>
@@ -141,34 +138,55 @@ export default function UserNav({ isCollapsed }: UserNavProps) {
 
         <DropdownMenuSeparator className="my-2" />
 
-        {/* Appearance */}
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger className={`${menuItemClass} gap-2`}>
+        {/* Appearance Responsive Inline Selector */}
+        <div className="flex items-center justify-between rounded-xl px-3 py-2 text-xs">
+          <div className="flex items-center gap-2 text-foreground font-medium">
             <HugeiconsIcon icon={SlidersHorizontalIcon} className={menuIconClass} />
-
             <span>Appearance</span>
-          </DropdownMenuSubTrigger>
+          </div>
 
-          <DropdownMenuSubContent className="w-48 rounded-xl p-2 -mt-10 ml-5 bg-sidebar/95 backdrop-blur-md border z-50">
-            <DropdownMenuItem onClick={() => setTheme('light')} className={menuItemClass}>
-              <HugeiconsIcon icon={Sun03Icon} className={menuIconClass} />
-
-              <span>Light</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem onClick={() => setTheme('dark')} className={menuItemClass}>
-              <HugeiconsIcon icon={Moon02Icon} className={menuIconClass} />
-
-              <span>Dark</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem onClick={() => setTheme('system')} className={menuItemClass}>
-              <HugeiconsIcon icon={ComputerIcon} className={menuIconClass} />
-
-              <span>System</span>
-            </DropdownMenuItem>
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
+          <div className="flex items-center gap-1 rounded-lg border border-border/50 bg-secondary/50 p-1">
+            <button
+              type="button"
+              onClick={() => setTheme('light')}
+              className={cn(
+                'flex h-6 w-6 items-center justify-center rounded-md text-xs transition-colors cursor-pointer',
+                theme === 'light'
+                  ? 'bg-background text-foreground shadow-2xs font-semibold'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+              title="Light Mode"
+            >
+              <HugeiconsIcon icon={Sun03Icon} className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setTheme('dark')}
+              className={cn(
+                'flex h-6 w-6 items-center justify-center rounded-md text-xs transition-colors cursor-pointer',
+                theme === 'dark'
+                  ? 'bg-background text-foreground shadow-2xs font-semibold'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+              title="Dark Mode"
+            >
+              <HugeiconsIcon icon={Moon02Icon} className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setTheme('system')}
+              className={cn(
+                'flex h-6 w-6 items-center justify-center rounded-md text-xs transition-colors cursor-pointer',
+                theme === 'system'
+                  ? 'bg-background text-foreground shadow-2xs font-semibold'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+              title="System Theme"
+            >
+              <HugeiconsIcon icon={ComputerIcon} className="size-3.5" />
+            </button>
+          </div>
+        </div>
 
         <DropdownMenuSeparator className="my-2" />
 

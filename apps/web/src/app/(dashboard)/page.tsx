@@ -4,7 +4,7 @@ import MessageBox from '@/modules/layout/components/messagebox/message-box';
 import { cn } from '@/lib/utils';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { HomeHero } from '@/modules/layout/components/home/home-hero';
-import { ChatComposer } from '../../modules/layout/components/home/chat-composer';
+import ChatComposer from '@/modules/layout/components/home/chat-composer';
 import { useHomeComposer } from '../../modules/layout/hooks/useHomeComposer';
 import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';

@@ -18,7 +18,7 @@ import {
 import { useSpaceComposer } from '../../../../modules/layout/hooks/useSpaceComposer';
 import { getErrorMessage } from '../../../../modules/auth/api/auth.error.api';
 import MessageBox from '@/modules/layout/components/messagebox/message-box';
-import { ChatComposer } from '../../../../modules/layout/components/home/chat-composer';
+import ChatComposer from '../../../../modules/layout/components/home/chat-composer';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -352,7 +352,7 @@ export default function SpaceDetailsPage({ params }: SpaceDetailsPageProps) {
   if (!space) return null;
 
   return (
-    <section className="h-full w-full p-4 max-md:pt-16 flex flex-col min-h-0">
+    <section className="h-full w-full p-4 max-md:pt-16 flex flex-col min-h-0 max-md:overflow-y-auto">
       <div className="w-full flex flex-col gap-2 flex-1 min-h-0">
         {/* Breadcrumbs Navigation */}
         <div className="flex items-center justify-between">
@@ -419,7 +419,7 @@ export default function SpaceDetailsPage({ params }: SpaceDetailsPageProps) {
         </div>
 
         {/* 2-Column Grid Layout */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 h-full flex-1 min-h-0">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 h-full flex-1 md:min-h-0 max-md:h-250">
           {/* LEFT COLUMN: Space Header & Chats */}
           <div className="flex flex-col gap-4 lg:col-span-8 min-h-0">
             {/* Space Name & Header */}
@@ -557,7 +557,7 @@ export default function SpaceDetailsPage({ params }: SpaceDetailsPageProps) {
                   ))}
                   <div
                     ref={observerTarget}
-                    className="h-8 w-full flex items-center justify-center mt-2 shrink-0"
+                    className="h-8 w-full flex items-center justify-center mt-2 shrink-0 "
                   >
                     {isFetchingNextPage && (
                       <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -685,6 +685,8 @@ export default function SpaceDetailsPage({ params }: SpaceDetailsPageProps) {
             )}
           </div>
         </div>
+
+        <div className="h-4 w-full flex items-center justify-center  shrink-0 md:hidden" />
       </div>
 
       {/* Edit Chat Title Dialog */}

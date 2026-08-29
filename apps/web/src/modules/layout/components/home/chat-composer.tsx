@@ -7,6 +7,7 @@ import FileSelector from './file-selector';
 import { UploadedFilesPreview } from './uploaded-files-preview';
 import { MIN_ROWS, LINE_HEIGHT } from '../../types/index';
 import type { UploadedFile } from '../../types/index';
+import React from 'react';
 
 interface ChatComposerProps {
   query: string;
@@ -24,7 +25,7 @@ interface ChatComposerProps {
   onRemoveFile: (index: number) => void;
 }
 
-export function ChatComposer({
+function ChatComposer({
   query,
   webSearch,
   files,
@@ -126,3 +127,5 @@ export function ChatComposer({
     </div>
   );
 }
+
+export default React.memo(ChatComposer);

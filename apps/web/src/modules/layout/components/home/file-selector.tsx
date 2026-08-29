@@ -15,7 +15,7 @@ type FileSelectorProps = {
   onFileChange: (files: File[]) => void;
 };
 
-export default function FileSelector({ onFileChange }: FileSelectorProps) {
+function FileSelector({ onFileChange }: FileSelectorProps) {
   const docsInputRef = React.useRef<HTMLInputElement>(null);
   const imageInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -82,3 +82,5 @@ export default function FileSelector({ onFileChange }: FileSelectorProps) {
     </DropdownMenu>
   );
 }
+
+export default React.memo(FileSelector);
