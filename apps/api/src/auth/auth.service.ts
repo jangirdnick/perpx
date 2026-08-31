@@ -392,11 +392,14 @@ export class AuthService {
       await this.prisma.refreshToken.deleteMany({
         where: {
           userId: decodedToken.sub,
-          deviceId: decodedToken.device,
         },
       });
 
-      return true;
+      return {
+        success: true,
+        message: 'Logged out of all devices successfully.',
+        data: {},
+      };
     } catch (error) {
       return handleServiceError(
         error,

@@ -22,3 +22,15 @@ export type ResponseUser = {
   role: UserRole;
   subscription: SubscriptionPlan;
 };
+
+export type UpdateUserRequest = {
+  fullname?: string;
+};
+
+export type UpdateUserResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    user: User;
+  };
+};

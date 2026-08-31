@@ -144,7 +144,7 @@
 
 .scrollbar-hide::-webkit-scrollbar {
   /* display: none; */
-  width: 5px;
+  width: 4px;
 
   /* background-color: #ffffff11 */
 }

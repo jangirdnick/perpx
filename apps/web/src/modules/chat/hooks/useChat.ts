@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useRef, useEffect, useCallback } from 'react';
 import {
+  clearAllChatsApi,
   deleteChat,
   getChatHistory,
   getChatMessages,
@@ -30,6 +31,7 @@ import {
   setStreamingMessage,
   updateChatTitle,
   updateHumanMessageId,
+  clearAllChatsState,
 } from '../slices/chatSlice';
 import { getSocket } from '../../../lib/socket';
 import { SendMessagePayload } from '@perpx/shared/types/message.type';
@@ -130,6 +132,28 @@ export const useDeleteChat = () => {
         dispatch(deleteChatFromSlice(data.data.id));
         queryClient.invalidateQueries({ queryKey: ['user-chats'] });
         toast.success(`${data.message}` || 'Chat deleted successfull.');
+      }
+    },
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err));
+    },
+  });
+};
+
+export const useClearAllChats = () => {
+  const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: clearAllChatsApi,
+    onSuccess: (data: { success: boolean; message: string }) => {
+      if (data.success) {
+        dispatch(clearAllChatsState());
+        queryClient.invalidateQueries({ queryKey: ['user-chats'] });
+        queryClient.invalidateQueries({ queryKey: ['chat-history'] });
+        toast.success(data.message || 'All chat history cleared');
+        router.push('/');
       }
     },
     onError: (err: unknown) => {
