@@ -1,5 +1,5 @@
 // packages/shared/index.ts
-import type { User } from './types/user.type';
+import type { User, UpdateUserRequest, UpdateUserResponse } from './types/user.type';
 import type {
   AuthRegisterResponse,
   AuthLoginResponse,
@@ -18,7 +18,7 @@ export * from './types/s3upload.type';
 export * from './types/space.type';
 
 export const test = 'hello from shared';
-export type { User };
+export type { User, UpdateUserRequest, UpdateUserResponse };
 export type {
   AuthRegisterResponse,
   AuthLoginResponse,

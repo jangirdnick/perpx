@@ -123,6 +123,16 @@ const chatSlice = createSlice({
       state.streamingMessage = '';
       state.error = null;
     },
+
+    clearAllChatsState: (state) => {
+      state.chats = [];
+      state.activeChat = null;
+      state.activeChatId = null;
+      state.messages = [];
+      state.isStreaming = false;
+      state.streamingMessage = '';
+      state.error = null;
+    },
   },
 });
 
@@ -143,6 +153,7 @@ export const {
   updateChatTitle,
   updateHumanMessageId,
   resetChatState,
+  clearAllChatsState,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

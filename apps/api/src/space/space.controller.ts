@@ -4,12 +4,14 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { SpaceService } from './space.service';
 import { CreateSpaceDto } from './dto/create-space.dto';
+import { UpdateSpaceDto } from './dto/update-space.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import type { Request } from 'express';
 
@@ -38,6 +40,19 @@ export class SpaceController {
     @Req() req: Request,
   ) {
     return await this.spaceService.createSpace(req.user!.id, createSpaceDto);
+  }
+
+  @Patch(':spaceId')
+  async updateSpace(
+    @Param('spaceId') spaceId: string,
+    @Body() updateSpaceDto: UpdateSpaceDto,
+    @Req() req: Request,
+  ) {
+    return await this.spaceService.updateSpace(
+      spaceId,
+      req.user!.id,
+      updateSpaceDto,
+    );
   }
 
   @Delete(':spaceId')

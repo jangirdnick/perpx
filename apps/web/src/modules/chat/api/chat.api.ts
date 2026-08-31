@@ -57,6 +57,11 @@ export async function deleteChat(chatId: string): Promise<ChatDeleteResponse> {
   return data;
 }
 
+export async function clearAllChatsApi() {
+  const { data } = await api.delete('/chat/clear-all');
+  return data;
+}
+
 export async function updateSpaceChat({
   spaceId,
   chatId,

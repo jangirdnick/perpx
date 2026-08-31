@@ -7,6 +7,8 @@ import {
   getSpaceById,
   getSpaces,
   getSpacesInfinite,
+  updateSpace,
+  UpdateSpacePayload,
 } from '../api/space.api';
 import { toast } from 'sonner';
 import { getErrorMessage } from '../../auth/api/auth.error.api';
@@ -27,6 +29,28 @@ export const useCreateSpace = () => {
     },
     onError: (error: unknown) => {
       toast.error(getErrorMessage(error) || 'Failed to create space');
+    },
+  });
+};
+
+export const useUpdateSpace = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ spaceId, payload }: { spaceId: string; payload: UpdateSpacePayload }) =>
+      updateSpace(spaceId, payload),
+    onSuccess: (data, variables) => {
+      if (data.success) {
+        toast.success(data.message || 'Space updated successfully');
+        queryClient.invalidateQueries({ queryKey: ['spaces'] });
+        queryClient.invalidateQueries({ queryKey: ['spaces-infinite'] });
+        queryClient.invalidateQueries({ queryKey: ['space', variables.spaceId] });
+      } else {
+        toast.error(data.message || 'Failed to update space');
+      }
+    },
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error) || 'Failed to update space');
     },
   });
 };
@@ -68,11 +92,20 @@ export const useDeleteSpace = () => {
 
   return useMutation({
     mutationFn: (spaceId: string) => deleteSpace(spaceId),
-    onSuccess: (data) => {
+    onSuccess: (data, spaceId) => {
       if (data.success) {
         toast.success(data.message || 'Space deleted successfully');
         queryClient.invalidateQueries({ queryKey: ['spaces'] });
         queryClient.invalidateQueries({ queryKey: ['spaces-infinite'] });
+        queryClient.removeQueries({ queryKey: ['space', spaceId] });
+
+        // Remove persisted Redux chat state from local storage for this space
+        try {
+          localStorage.removeItem(`spaceChat_${spaceId}`);
+        } catch (e) {
+          console.error('Failed to clear space chat local storage', e);
+        }
+
         router.push('/spaces');
       } else {
         toast.error(data.message || 'Failed to delete space');
