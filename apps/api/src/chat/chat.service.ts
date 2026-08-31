@@ -446,4 +446,18 @@ export class ChatService {
       message: `${deletedChat.title} deleted successfully`,
     };
   }
+
+  async deleteAllUserChats(userId: string) {
+    const result = await this.prisma.chat.deleteMany({
+      where: { userId },
+    });
+
+    return {
+      success: true,
+      data: {
+        count: result.count,
+      },
+      message: 'All chat history deleted successfully',
+    };
+  }
 }

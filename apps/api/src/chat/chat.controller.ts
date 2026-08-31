@@ -24,6 +24,11 @@ export class ChatController {
     return await this.chatService.getSidebarUserChats(req.user!.id);
   }
 
+  @Delete('clear-all')
+  async clearAllChats(@Req() req: Request) {
+    return await this.chatService.deleteAllUserChats(req.user!.id);
+  }
+
   @Get('history/infinite')
   async getHistoryChats(@Req() req: Request) {
     const cursor = req.query.cursor as string | undefined;

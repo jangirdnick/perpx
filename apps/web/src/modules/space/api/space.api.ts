@@ -7,8 +7,18 @@ export type CreateSpacePayload = {
   type: 'PUBLIC' | 'PRIVATE' | 'GROUP';
 };
 
+export type UpdateSpacePayload = Partial<CreateSpacePayload>;
+
 export async function createSpace(payload: CreateSpacePayload): Promise<SpaceResponse> {
   const { data } = await api.post('/space', payload);
+  return data;
+}
+
+export async function updateSpace(
+  spaceId: string,
+  payload: UpdateSpacePayload,
+): Promise<SpaceResponse> {
+  const { data } = await api.patch(`/space/${spaceId}`, payload);
   return data;
 }
 

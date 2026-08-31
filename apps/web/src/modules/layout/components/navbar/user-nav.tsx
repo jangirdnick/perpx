@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -28,12 +29,13 @@ import { cn } from '@/lib/utils';
 
 interface UserNavProps {
   isCollapsed: boolean;
+  onOpenSettings?: () => void;
 }
 
 const menuIconClass = 'size-4 text-muted-foreground';
 const menuItemClass = 'cursor-pointer rounded-lg py-2.5 transition-colors';
 
-export default function UserNav({ isCollapsed }: UserNavProps) {
+export default memo(function UserNav({ isCollapsed, onOpenSettings }: UserNavProps) {
   const { theme, setTheme } = useTheme();
 
   const { user } = useAppSelector((state) => state.auth);
@@ -81,7 +83,7 @@ export default function UserNav({ isCollapsed }: UserNavProps) {
       <DropdownMenuContent
         align="end"
         sideOffset={12}
-        className="w-80 max-w-[calc(100vw-1.5rem)] rounded-2xl border bg-sidebar/95 backdrop-blur-md p-2 z-50"
+        className="w-80 max-w-[calc(100vw-1.5rem)] rounded-2xl border bg-sidebar/95 backdrop-blur-md p-2 ml-2 z-999"
       >
         {/* User Card */}
         <div className="flex items-center gap-3 rounded-xl p-3">
@@ -101,7 +103,7 @@ export default function UserNav({ isCollapsed }: UserNavProps) {
         <DropdownMenuSeparator className="my-2" />
 
         {/* Settings */}
-        <DropdownMenuItem className={menuItemClass}>
+        <DropdownMenuItem className={menuItemClass} onClick={onOpenSettings}>
           <HugeiconsIcon icon={Settings02Icon} className={menuIconClass} />
 
           <span>All Settings</span>
@@ -204,4 +206,4 @@ export default function UserNav({ isCollapsed }: UserNavProps) {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+});

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSpaceDto } from './dto/create-space.dto';
+import { UpdateSpaceDto } from './dto/update-space.dto';
 import { SpaceMemberRole } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 
@@ -175,6 +176,57 @@ export class SpaceService {
     };
   }
 
+  async updateSpace(
+    spaceId: string,
+    userId: string,
+    updateDto: UpdateSpaceDto,
+  ) {
+    const space = await this.prisma.space.findUnique({
+      where: { id: spaceId },
+      select: {
+        id: true,
+        spaceMembers: {
+          where: { userId },
+          select: { role: true },
+        },
+      },
+    });
+
+    if (!space) {
+      throw new NotFoundException('Space not found');
+    }
+
+    const member = space.spaceMembers[0];
+    if (!member || member.role !== SpaceMemberRole.ADMIN) {
+      throw new ForbiddenException('Only space admins can update this space');
+    }
+
+    const updatedSpace = await this.prisma.space.update({
+      where: { id: spaceId },
+      data: {
+        title: updateDto.title,
+        description: updateDto.description,
+        type: updateDto.type,
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        type: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        space: updatedSpace,
+      },
+      message: 'Space updated successfully',
+    };
+  }
+
   async deleteSpace(spaceId: string, userId: string) {
     const space = await this.prisma.space.findUnique({
       where: { id: spaceId },
@@ -196,8 +248,14 @@ export class SpaceService {
       throw new ForbiddenException('Only space admins can delete this space');
     }
 
-    await this.prisma.space.delete({
-      where: { id: spaceId },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.chat.deleteMany({
+        where: { spaceId },
+      });
+
+      await tx.space.delete({
+        where: { id: spaceId },
+      });
     });
 
     return {
