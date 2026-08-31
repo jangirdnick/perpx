@@ -27,8 +27,10 @@ jobs:
             --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
             --document-name "AWS-RunShellScript" \
             --comment "Deploy latest Docker images from CI" \
+            --timeout-seconds 600 \
             --parameters 'commands=[
               "set -e",
+              "echo \">>> Starting deployment at $(date)\"",
               "cd /opt/app",
               "echo \">>> Pulling latest images\"",
               "sudo docker compose pull",
@@ -36,9 +38,11 @@ jobs:
               "sudo docker compose up -d --force-recreate --remove-orphans",
               "echo \">>> Cleaning unused images\"",
               "sudo docker image prune -f",
+              "echo \">>> Waiting for containers to stabilize\"",
+              "sleep 10",
               "echo \">>> Current status\"",
               "sudo docker compose ps",
-              "echo \">>> Deployment completed successfully\""
+              "echo \">>> Deployment completed successfully at $(date)\""
             ]' \
             --output text \
             --query "Command.CommandId")
@@ -49,14 +53,15 @@ jobs:
       - name: Wait for SSM command to finish
         run: |
           COMMAND_ID=${{ steps.ssm.outputs.COMMAND_ID }}
+          INSTANCE_ID=${{ secrets.EC2_INSTANCE_ID }}
 
           echo "Waiting for deployment to complete..."
-          sleep 5
+          sleep 8
 
-          for i in {1..30}; do
+          for i in {1..40}; do
             STATUS=$(aws ssm get-command-invocation \
               --command-id "$COMMAND_ID" \
-              --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+              --instance-id "$INSTANCE_ID" \
               --query "Status" \
               --output text 2>/dev/null || echo "Pending")
 
@@ -66,7 +71,7 @@ jobs:
               echo "===== Deployment Output ====="
               aws ssm get-command-invocation \
                 --command-id "$COMMAND_ID" \
-                --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+                --instance-id "$INSTANCE_ID" \
                 --query "StandardOutputContent" \
                 --output text
               echo "============================="
@@ -77,13 +82,13 @@ jobs:
               echo "===== Error Output (Stderr) ====="
               aws ssm get-command-invocation \
                 --command-id "$COMMAND_ID" \
-                --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+                --instance-id "$INSTANCE_ID" \
                 --query "StandardErrorContent" \
                 --output text
               echo "===== Standard Output (Stdout) ====="
               aws ssm get-command-invocation \
                 --command-id "$COMMAND_ID" \
-                --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+                --instance-id "$INSTANCE_ID" \
                 --query "StandardOutputContent" \
                 --output text
               echo "========================"
