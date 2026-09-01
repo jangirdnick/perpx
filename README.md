@@ -1,12 +1,12 @@
 # PERPX — AI-Powered Research & Chat Platform
 
-A full-stack AI chat platform for research and productivity. Users can create private or group spaces to discuss ideas with AI, perform web research, upload documents for RAG-based Q&A, and collaborate in real-time.
+A full-stack AI chat platform designed for research, productivity, and collaboration. Users can create private or group spaces to discuss ideas with AI, perform web research, upload documents for RAG-based Q&A, and collaborate in real-time.
 
 ---
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    Client (Next.js 16)                      │
 │  ┌───────────┐  ┌──────────────┐  ┌─────────────────────┐  │
@@ -73,105 +73,10 @@ A full-stack AI chat platform for research and productivity. Users can create pr
 | **Email**            | Resend                                                 |
 | **Package Manager**  | pnpm 10 (monorepo)                                     |
 | **Containerization** | Docker (multi-stage), Docker Compose                   |
-| **CI/CD**            | GitHub Actions                                         |
+| **CI/CD**            | GitHub Actions (Tests, Docker Build, AWS SSM Deploy)   |
 | **Code Quality**     | ESLint, Prettier, Husky, lint-staged                   |
 | **Forms**            | react-hook-form + Zod v4                               |
 | **Icons**            | HugeIcons                                              |
-
----
-
-## Project Structure
-
-```
-perpx/
-├── apps/
-│   ├── api/                                # NestJS Backend
-│   │   ├── prisma/
-│   │   │   ├── schema.prisma               # Database schema (6 models, 4 enums)
-│   │   │   └── migrations/                 # Prisma migrations
-│   │   ├── src/
-│   │   │   ├── main.ts                     # Bootstrap (global prefix, CORS, pipes)
-│   │   │   ├── app.module.ts               # Root module
-│   │   │   ├── app.controller.ts           # Health check (GET /api/health)
-│   │   │   ├── auth/                       # Auth module
-│   │   │   │   ├── auth.controller.ts      # Register, login, refresh, logout, verify
-│   │   │   │   ├── auth.service.ts         # JWT, bcrypt, token rotation, multi-device
-│   │   │   │   ├── guards/
-│   │   │   │   │   ├── auth.guard.ts       # Bearer token guard (Redis cache)
-│   │   │   │   │   └── ws-auth.guard.ts    # WebSocket auth guard
-│   │   │   │   └── dto/                    # Validation DTOs
-│   │   │   ├── chat/                       # Chat module
-│   │   │   │   ├── chat.controller.ts      # CRUD endpoints
-│   │   │   │   ├── chat.service.ts         # Business logic
-│   │   │   │   ├── chat.gateway.ts         # Socket.io (/chat namespace)
-│   │   │   │   │                           #   sendMessage → AI stream → events
-│   │   │   │   └── dto/
-│   │   │   ├── message/                    # Message module
-│   │   │   │   ├── message.controller.ts   # Get/delete messages
-│   │   │   │   └── message.service.ts      # CRUD + saveMessageWithSources
-│   │   │   ├── api/                        # AI Integration (LangChain)
-│   │   │   │   ├── api.service.ts          # Gemini, Mistral, Tavily orchestration
-│   │   │   │   └── utils/                  # Message builders, search parsers
-│   │   │   ├── email/                      # Email module (Resend + Handlebars)
-│   │   │   ├── user/                       # User module
-│   │   │   ├── redis/                      # Redis caching wrapper
-│   │   │   ├── prisma/                     # Prisma service
-│   │   │   ├── upload/                     # S3 presigned URL generation
-│   │   │   ├── vector/                     # Pinecone vector search (PDF RAG)
-│   │   │   ├── types/                      # Express, Socket.io type extensions
-│   │   │   └── utils/                      # Bcrypt, error handler, template renderer
-│   │   ├── test/                           # Jest e2e tests
-│   │   ├── generated/prisma/               # Auto-generated Prisma client
-│   │   └── package.json
-│   │
-│   └── web/                                # Next.js Frontend
-│       ├── src/
-│       │   ├── app/
-│       │   │   ├── layout.tsx              # Root: providers, fonts, theme
-│       │   │   ├── globals.css             # Tailwind v4, OKLCH theme variables
-│       │   │   ├── (dashboard)/            # Protected routes
-│       │   │   │   ├── layout.tsx          # Sidebar + ProtectedRoute
-│       │   │   │   ├── page.tsx            # Main chat page
-│       │   │   │   └── spaces/page.tsx     # Spaces placeholder
-│       │   │   └── account/                # Guest-only routes
-│       │   │       ├── login/page.tsx
-│       │   │       ├── register/page.tsx
-│       │   │       └── @sendnewemail/      # Intercepted route modal
-│       │   ├── components/
-│       │   │   ├── ui/                     # shadcn/ui primitives
-│       │   │   └── shared/form/            # Reusable form input
-│       │   ├── modules/
-│       │   │   ├── auth/                   # Auth feature (api, components, hooks, schemas, slice)
-│       │   │   ├── chat/                   # Chat feature (api, hooks, slice)
-│       │   │   └── layout/                 # Layout feature (composer, messagebox, navbar)
-│       │   ├── hooks/                      # Shared hooks (use-mobile)
-│       │   ├── store/                      # Redux store (persist config)
-│       │   └── lib/                        # Axios instance, Socket client, providers
-│       ├── public/                         # Static assets
-│       └── package.json
-│
-├── packages/
-│   └── shared/                             # @perpx/shared — shared TypeScript types
-│       ├── types/
-│       │   ├── api.type.ts                 # ApiSuccessResponse, ApiErrorResponse
-│       │   ├── auth.type.ts                # Auth response types
-│       │   ├── chat.type.ts                # Chat types
-│       │   ├── message.type.ts             # Message, WebSource, Attachment
-│       │   ├── s3upload.type.ts            # S3 upload types
-│       │   └── user.type.ts                # User types
-│       └── index.ts
-│
-├── docker/
-│   ├── api.Dockerfile                      # Multi-stage NestJS build (node:22-alpine)
-│   └── web.Dockerfile                      # Multi-stage Next.js build (standalone)
-├── docker-compose.yml                      # Orchestrates api + web
-├── .github/workflows/
-│   ├── ci.yml                              # Lint + build on push/PR
-│   └── cd.yml                              # Docker build & push on CI success
-├── .husky/pre-commit                       # lint-staged
-├── package.json                            # Root workspace
-└── pnpm-workspace.yaml
-```
 
 ---
 
@@ -199,10 +104,21 @@ perpx/
 | Get user chat list                               | ✅     |
 | Send human messages via WebSocket                | ✅     |
 | Real-time AI streaming (token-by-token)          | ✅     |
-| Message history with pagination                  | ✅     |
+| Message history with cursor pagination           | ✅     |
 | Optimistic UI updates                            | ✅     |
 | AI auto-title generation (Mistral)               | ✅     |
 | Markdown rendering (react-markdown + remark-gfm) | ✅     |
+
+### Space System (Collaboration)
+
+| Feature                                        | Status |
+| ---------------------------------------------- | ------ |
+| Create PUBLIC, PRIVATE, or GROUP spaces        | ✅     |
+| Role-Based Access Control (ADMIN, MEMBER)      | ✅     |
+| Associate chats with specific spaces           | ✅     |
+| Update space details (Name, Visibility)        | ✅     |
+| Cascading deletes (Space -> Chats -> Messages) | ✅     |
+| Infinite scroll for space chats                | ✅     |
 
 ### AI Integration
 
@@ -225,17 +141,17 @@ perpx/
 
 ### Frontend
 
-| Feature                                        | Status |
-| ---------------------------------------------- | ------ |
-| Responsive design (mobile-first)               | ✅     |
-| Dark / Light theme (next-themes)               | ✅     |
-| Redux state with persist                       | ✅     |
-| React Query server state                       | ✅     |
-| shadcn/ui component library                    | ✅     |
-| Zod form validation                            | ✅     |
-| Axios interceptors (auto token refresh)        | ✅     |
-| Socket.io auto-reconnect                       | ✅     |
-| Intercepted route for email verification modal | ✅     |
+| Feature                                       | Status |
+| --------------------------------------------- | ------ |
+| Responsive design (mobile-first)              | ✅     |
+| Modular UI architecture (memoized components) | ✅     |
+| Dark / Light theme (next-themes)              | ✅     |
+| Redux state with persist                      | ✅     |
+| React Query server state                      | ✅     |
+| shadcn/ui component library                   | ✅     |
+| Zod form validation                           | ✅     |
+| Axios interceptors (auto token refresh)       | ✅     |
+| Socket.io auto-reconnect                      | ✅     |
 
 ### DevOps
 
@@ -245,8 +161,8 @@ perpx/
 | Docker Compose orchestration     | ✅     |
 | GitHub Actions CI (lint + build) | ✅     |
 | GitHub Actions CD (Docker push)  | ✅     |
+| AWS SSM remote deployment        | ✅     |
 | Husky pre-commit hooks           | ✅     |
-| ESLint + Prettier                | ✅     |
 
 ---
 
@@ -280,6 +196,15 @@ perpx/
 | POST   | `/api/chat/rename/:chatId` | Bearer | Rename chat        |
 | DELETE | `/api/chat/delete/:chatId` | Bearer | Delete chat        |
 
+### Space
+
+| Method | Endpoint              | Auth   | Description              |
+| ------ | --------------------- | ------ | ------------------------ |
+| GET    | `/api/space`          | Bearer | Get all user spaces      |
+| GET    | `/api/space/:spaceId` | Bearer | Get specific space       |
+| PATCH  | `/api/space/:spaceId` | Bearer | Update space details     |
+| DELETE | `/api/space/:spaceId` | Bearer | Delete space and history |
+
 ### Message
 
 | Method | Endpoint                      | Auth   | Description                |
@@ -310,7 +235,7 @@ perpx/
 
 ---
 
-## Database Schema
+## Database Schema (Prisma)
 
 ```prisma
 enum UserRole         { USER ADMIN }
@@ -401,7 +326,7 @@ model SpaceMember {
 
 ## Real-Time Message Flow
 
-```
+```text
 Client                    Server                        AI / Services
   │                         │                              │
   │── sendMessage ─────────>│                              │
@@ -577,23 +502,11 @@ docker-compose down
 
 ## CI/CD Pipeline
 
-### CI (`.github/workflows/ci.yml`)
+Our GitHub Actions pipeline automatically tests, builds, and deploys code to AWS EC2:
 
-Triggered on push / PR to `main`:
-
-1. Checkout + Setup pnpm + Node 22
-2. Install dependencies (frozen lockfile)
-3. Generate Prisma client
-4. Lint API & Web
-5. Build API & Web
-
-### CD (`.github/workflows/cd.yml`)
-
-Triggered on CI success on `main`:
-
-1. Login to Docker Hub
-2. Build & push `perpx-api` and `perpx-web` images
-   - Tagged `latest` + commit SHA
+1. **`tests.yml`**: Runs ESLint, Prettier, and Jest tests on PRs and pushes.
+2. **`docker-build.yml`**: On successful CI in `main`, builds and pushes multi-stage Next.js/NestJS images to Docker Hub.
+3. **`deploy-ec2.yml`**: Executes a remote AWS SSM (Systems Manager) command on the target EC2 instance. Features robust polling with SSM execution delays (`sleep 5`), graceful timeout handling, and verbose `stdout/stderr` output for Docker Compose failures.
 
 ---
 
@@ -605,14 +518,15 @@ Triggered on CI success on `main`:
 - Bearer auth guard with Redis-backed token validation cache
 - Auth guard caches user data in Redis (15m TTL)
 - Global `ValidationPipe` with `whitelist` + `forbidNonWhitelisted`
-- WebSocket connections authenticated via JWT
+- WebSocket connections authenticated via JWT (`WsAuthGuard`)
 - S3 presigned URLs for secure file upload (no direct exposure)
+- Cascading deletes safely orchestrated inside Prisma `$transaction`s
 
 ---
 
 ## Package Architecture
 
-```
+```text
 perpx (monorepo)           # Root workspace (pnpm-workspace.yaml)
 ├── apps/api               # NestJS 11 — REST + WebSocket server
 │   ├── @perpx/shared      # (workspace dependency)
