@@ -30,7 +30,7 @@ export class EmailService {
 
     try {
       const { data, error } = await this.resendService.emails.send({
-        from: 'PerpX <no-reply@nickdstudio.online>',
+        from: `PerpX <no-reply@${process.env.RESEND_EMAIL_SERVER}>`,
         to: email,
         subject: 'Verify your email for PerpX',
         html,
