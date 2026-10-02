@@ -234,6 +234,12 @@ export const useChat = () => {
       dispatch(setActiveChatId(chatId));
       dispatch(appendStreamingToken(token));
       streamingMessageRef.current += token;
+
+      // Pehle streamMessage token pe hi URL update kar do (fallback if humanMessage miss ho)
+      const currentUrl = new URL(window.location.href);
+      if (currentUrl.searchParams.get('chatId') !== chatId) {
+        router.replace(`/?chatId=${chatId}`);
+      }
     };
 
     const onStreamEnd = ({ message }: { message: Message }) => {
@@ -256,11 +262,8 @@ export const useChat = () => {
       dispatch(setIsStreaming(false));
       streamingMessageRef.current = '';
 
-      const currentUrl = new URL(window.location.href);
-      if (currentUrl.searchParams.get('chatId') !== message.chatId) {
-        router.push(`/?chatId=${message.chatId}`);
-      }
-
+      // URL pehle se humanMessage/streamMessage pe update ho chuka hoga
+      // Sirf invalidate karo taaki sidebar refresh ho
       queryClient.invalidateQueries({ queryKey: ['user-chats'] });
     };
 
@@ -292,6 +295,13 @@ export const useChat = () => {
       // UPDATE CACHE: User ka final message bhi cache me daal diya
       updateTanstackCache(humanMessage.chatId, humanMessage);
       updateChatListTimestamp(humanMessage.chatId, humanMessage.createdAt);
+
+      // ✅ FIX: Turant URL update karo jaise hi real chatId milta hai
+      // streamEnd ka wait nahi karna — is se chat instantly switch hoti hai
+      const currentUrl = new URL(window.location.href);
+      if (currentUrl.searchParams.get('chatId') !== humanMessage.chatId) {
+        router.replace(`/?chatId=${humanMessage.chatId}`);
+      }
     };
 
     const onStreamError = ({ message }: { message: string }) => {
@@ -330,6 +340,9 @@ export const useChat = () => {
       const targetChatId = payload.chatId || 'temp-chat';
 
       if (!payload.chatId) {
+        // ✅ FIX: Nayi chat start hone pe purane messages clear karo
+        // Warna old chat ke messages + new message dono saath dikhte hain
+        dispatch(setMessages([]));
         dispatch(setActiveChatId(targetChatId));
       }
 

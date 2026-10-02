@@ -72,7 +72,7 @@ export class ApiService {
 
     if (model === 'mistral') {
       return new ChatMistralAI({
-        model: 'mistral-small-latest',
+        model: 'codestral-latest',
         apiKey: process.env.MISTRAL_API_KEY,
         streaming: true,
         temperature: 0.3,
